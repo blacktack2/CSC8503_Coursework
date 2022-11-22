@@ -481,6 +481,8 @@ bool TutorialGame::SelectObject() {
 				selectionObject = (GameObject*)closestCollision.node;
 
 				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
+
+				Debug::DrawLine(ray.GetPosition(), closestCollision.collidedAt, Vector4(0, 0, 1, 1), 5.0f);
 				return true;
 			}
 			else {
