@@ -33,7 +33,7 @@ bool CollisionDetection::RayIntersection(const Ray& r,GameObject& object, RayCol
 	const Transform& worldTransform = object.GetTransform();
 	const CollisionVolume* volume	= object.GetBoundingVolume();
 
-	if (!volume) {
+	if (!volume || !DoCollisionLayersOverlap(r.GetLayer(), volume->layer)) {
 		return false;
 	}
 
@@ -143,7 +143,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 	const CollisionVolume* volA = a->GetBoundingVolume();
 	const CollisionVolume* volB = b->GetBoundingVolume();
 
-	if (!volA || !volB) {
+	if (!volA || !volB || !DoCollisionLayersOverlap(volA->layer, volB->layer)) {
 		return false;
 	}
 

@@ -1,4 +1,6 @@
 #pragma once
+#include "Collision.h"
+
 namespace NCL {
 	enum class VolumeType {
 		AABB	= 1,
@@ -10,14 +12,15 @@ namespace NCL {
 		Invalid = 256
 	};
 
-	class CollisionVolume
-	{
+	class CollisionVolume {
 	public:
 		CollisionVolume() {
 			type = VolumeType::Invalid;
+			layer = CollisionLayer::Default;
 		}
 		~CollisionVolume() {}
 
 		VolumeType type;
+		CollisionLayer layer;
 	};
 }

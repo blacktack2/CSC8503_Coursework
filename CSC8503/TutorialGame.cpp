@@ -361,7 +361,7 @@ GameObject* TutorialGame::AddEnemyToWorld(const Vector3& position) {
 
 	GameObject* character = new GameObject();
 
-	AABBVolume* volume = new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize);
+	AABBVolume* volume = new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize, CollisionLayer::Layer2);
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
 	character->GetTransform()

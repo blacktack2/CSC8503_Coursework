@@ -5,10 +5,11 @@ namespace NCL {
     class CapsuleVolume : public CollisionVolume
     {
     public:
-        CapsuleVolume(float halfHeight, float radius) {
+        CapsuleVolume(float halfHeight, float radius, CollisionLayer layer = CollisionLayer::Default) {
             this->halfHeight    = halfHeight;
             this->radius        = radius;
             this->type          = VolumeType::Capsule;
+			this->layer         = layer;
         };
         ~CapsuleVolume() {
 

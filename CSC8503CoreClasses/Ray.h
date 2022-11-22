@@ -1,4 +1,5 @@
 #pragma once
+#include "Collision.h"
 
 namespace NCL {
 	namespace Maths {
@@ -21,9 +22,10 @@ namespace NCL {
 
 		class Ray {
 		public:
-			Ray(Vector3 position, Vector3 direction) {
+			Ray(Vector3 position, Vector3 direction, CollisionLayer layer = CollisionLayer::Default) {
 				this->position  = position;
 				this->direction = direction;
+				this->layer = layer;
 			}
 			~Ray(void) {}
 
@@ -31,9 +33,12 @@ namespace NCL {
 
 			Vector3 GetDirection() const {return direction;	}
 
+			CollisionLayer GetLayer() const { return layer; }
+
 		protected:
 			Vector3 position;	//World space position
 			Vector3 direction;	//Normalised world space direction
+			CollisionLayer layer;
 		};
 	}
 }
