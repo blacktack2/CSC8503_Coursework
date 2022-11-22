@@ -59,6 +59,7 @@ namespace NCL {
 			void InitCubeInertia();
 			void InitSphereInertia();
 			void InitSphereInertiaHollow();
+			void InitCapsuleInertia();
 
 			void UpdateInertiaTensor();
 

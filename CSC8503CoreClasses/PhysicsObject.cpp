@@ -66,9 +66,18 @@ void PhysicsObject::InitSphereInertia() {
 
 void PhysicsObject::InitSphereInertiaHollow() {
 	float radius	= transform->GetScale().GetMaxElement();
-	float i			= (1.5f) * inverseMass / (radius*radius);
+	float i			= 1.5f * inverseMass / (radius*radius);
 
 	inverseInertia	= Vector3(i, i, i);
+}
+
+void PhysicsObject::InitCapsuleInertia() {
+	float height = transform->GetScale().y;
+	float radius = std::max(transform->GetScale().x, transform->GetScale().z);
+	float xz = 12.0f * inverseMass / (3.0f * 3.14159f * height * radius * radius * ((height * height * (1.0f / 3.0f)) + (radius * radius)) + 16.0f * 3.14159f * radius * radius * radius * ((0.4f * radius * radius) + (0.5f * height * height) + (0.375 * height * radius)));
+	float y = 30.0f * inverseMass / (radius * radius * radius * radius * 3.14159f * (15.0f * height + 8.0f * radius));
+
+	inverseInertia = Vector3(xz, y, xz);
 }
 
 void PhysicsObject::UpdateInertiaTensor() {

@@ -331,6 +331,28 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	return cube;
 }
 
+GameObject* NCL::CSC8503::TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inverseMass) {
+	GameObject* capsule = new GameObject();
+
+	Vector3 capsuleSize = Vector3(radius, halfHeight, radius);
+	CapsuleVolume* volume = new CapsuleVolume(halfHeight, radius);
+	capsule->SetBoundingVolume((CollisionVolume*)volume);
+
+	capsule->GetTransform()
+		.SetScale(capsuleSize)
+		.SetPosition(position);
+
+	capsule->SetRenderObject(new RenderObject(&capsule->GetTransform(), capsuleMesh, basicTex, basicShader));
+	capsule->SetPhysicsObject(new PhysicsObject(&capsule->GetTransform(), capsule->GetBoundingVolume()));
+
+	capsule->GetPhysicsObject()->SetInverseMass(inverseMass);
+	capsule->GetPhysicsObject()->InitCapsuleInertia();
+
+	world->AddGameObject(capsule);
+
+	return capsule;
+}
+
 GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) {
 	float meshSize		= 1.0f;
 	float inverseMass	= 0.5f;
@@ -422,16 +444,17 @@ void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacin
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
 	float sphereRadius = 1.0f;
 	Vector3 cubeDims = Vector3(1, 1, 1);
+	float capsuleHeight = 1.0f;
+	float capsuleRadius = 0.5f;
 
 	for (int x = 0; x < numCols; ++x) {
 		for (int z = 0; z < numRows; ++z) {
 			Vector3 position = Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 
-			if (rand() % 2) {
-				AddCubeToWorld(position, cubeDims);
-			}
-			else {
-				AddSphereToWorld(position, sphereRadius);
+			switch (rand() % 3) {
+				case 0: AddCubeToWorld(position, cubeDims); break;
+				case 1: AddSphereToWorld(position, sphereRadius); break;
+				case 2: AddCapsuleToWorld(position, capsuleHeight, capsuleRadius); break;
 			}
 		}
 	}
