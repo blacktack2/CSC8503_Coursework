@@ -289,7 +289,8 @@ physics worlds. You'll probably need another function for the creation of OBB cu
 
 */
 GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius, float inverseMass) {
-	GameObject* sphere = new GameObject();
+	static int id = 0;
+	GameObject* sphere = new GameObject(std::string("Sphere").append(std::to_string(id++)));
 
 	Vector3 sphereSize = Vector3(radius, radius, radius);
 	SphereVolume* volume = new SphereVolume(radius);
@@ -311,7 +312,8 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 }
 
 GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
-	GameObject* cube = new GameObject();
+	static int id = 0;
+	GameObject* cube = new GameObject(std::string("Cube").append(std::to_string(id++)));
 
 	AABBVolume* volume = new AABBVolume(dimensions);
 	cube->SetBoundingVolume((CollisionVolume*)volume);
@@ -332,7 +334,8 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 }
 
 GameObject* NCL::CSC8503::TutorialGame::AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inverseMass) {
-	GameObject* capsule = new GameObject();
+	static int id = 0;
+	GameObject* capsule = new GameObject(std::string("Capsule").append(std::to_string(id++)));
 
 	Vector3 capsuleSize = Vector3(radius, halfHeight, radius);
 	CapsuleVolume* volume = new CapsuleVolume(halfHeight, radius);
