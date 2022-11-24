@@ -68,6 +68,12 @@ TutorialGame::~TutorialGame()	{
 }
 
 void TutorialGame::UpdateGame(float dt) {
+	Vector2 screenSize = Window::GetWindow()->GetScreenSize();
+	Vector3 crossPos = CollisionDetection::Unproject(Vector3(screenSize * 0.5f, 0.1f), *world->GetMainCamera());
+	Debug::DrawLine(crossPos, crossPos + Vector3(0.01f, 0, 0), Vector4(1, 0, 0, 1));
+	Debug::DrawLine(crossPos, crossPos + Vector3(0, 0.01f, 0), Vector4(0, 1, 0, 1));
+	Debug::DrawLine(crossPos, crossPos + Vector3(0, 0, 0.01f), Vector4(0, 0, 1, 1));
+
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
 	}
@@ -491,58 +497,51 @@ bool TutorialGame::SelectObject() {
 			Window::GetWindow()->LockMouseToWindow(true);
 		}
 	}
-	if (inSelectionMode) {
-		Debug::Print("Press Q to change to camera mode!", Vector2(5, 85));
-
-		if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
-			if (selectionObject) {	//set colour to deselected;
-				selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-				selectionObject = nullptr;
-				if (selectionLookatObject) {
-					selectionLookatObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-					selectionLookatObject = nullptr;
-				}
-			}
-
-			Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
-
-			RayCollision closestCollision;
-			if (world->Raycast(ray, closestCollision, true)) {
-				selectionObject = (GameObject*)closestCollision.node;
-
-				selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
-
-				Debug::DrawLine(ray.GetPosition(), closestCollision.collidedAt, Vector4(0, 0, 1, 1), 5.0f);
-
-				Ray objectRay = Ray(selectionObject->GetTransform().GetPosition(), selectionObject->GetTransform().GetOrientation() * Vector3(0, 0, 1), selectionObject->GetBoundingVolume()->layer);
-
-				RayCollision closestObjectCollision;
-				if (world->Raycast(objectRay, closestObjectCollision, true)) {
-					selectionLookatObject = (GameObject*)closestObjectCollision.node;
-
-					selectionLookatObject->GetRenderObject()->SetColour(Vector4(0.5, 0.5, 1, 1));
-
-					Debug::DrawLine(objectRay.GetPosition(), closestObjectCollision.collidedAt, Vector4(0.5, 0.5, 1, 1), 5.0f);
-				}
-				return true;
-			}
-			else {
-				return false;
+	if (Window::GetMouse()->ButtonDown(NCL::MouseButtons::LEFT)) {
+		if (selectionObject) {	//set colour to deselected;
+			selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+			selectionObject = nullptr;
+			if (selectionLookatObject) {
+				selectionLookatObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+				selectionLookatObject = nullptr;
 			}
 		}
-		if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
-			if (selectionObject) {
-				if (lockedObject == selectionObject) {
-					lockedObject = nullptr;
-				}
-				else {
-					lockedObject = selectionObject;
-				}
+
+		Ray ray = CollisionDetection::BuildRayFromCamera(*world->GetMainCamera());
+
+		RayCollision closestCollision;
+		if (world->Raycast(ray, closestCollision, true)) {
+			selectionObject = (GameObject*)closestCollision.node;
+
+			selectionObject->GetRenderObject()->SetColour(Vector4(0, 1, 0, 1));
+
+			Debug::DrawLine(ray.GetPosition(), closestCollision.collidedAt, Vector4(0, 0, 1, 1), 5.0f);
+
+			Ray objectRay = Ray(selectionObject->GetTransform().GetPosition(), selectionObject->GetTransform().GetOrientation() * Vector3(0, 0, 1), selectionObject->GetBoundingVolume()->layer);
+
+			RayCollision closestObjectCollision;
+			if (world->Raycast(objectRay, closestObjectCollision, true)) {
+				selectionLookatObject = (GameObject*)closestObjectCollision.node;
+
+				selectionLookatObject->GetRenderObject()->SetColour(Vector4(0.5, 0.5, 1, 1));
+
+				Debug::DrawLine(objectRay.GetPosition(), closestObjectCollision.collidedAt, Vector4(0.5, 0.5, 1, 1), 5.0f);
 			}
+			return true;
+		}
+		else {
+			return false;
 		}
 	}
-	else {
-		Debug::Print("Press Q to change to select mode!", Vector2(5, 85));
+	if (Window::GetKeyboard()->KeyPressed(NCL::KeyboardKeys::L)) {
+		if (selectionObject) {
+			if (lockedObject == selectionObject) {
+				lockedObject = nullptr;
+			}
+			else {
+				lockedObject = selectionObject;
+			}
+		}
 	}
 	return false;
 }
@@ -563,7 +562,7 @@ void TutorialGame::MoveSelectedObject() {
 	}
 	//Push the selected object!
 	if (Window::GetMouse()->ButtonPressed(NCL::MouseButtons::RIGHT)) {
-		Ray ray = CollisionDetection::BuildRayFromMouse(*world->GetMainCamera());
+		Ray ray = CollisionDetection::BuildRayFromCamera(*world->GetMainCamera());
 
 		RayCollision closestCollision;
 		if (world->Raycast(ray, closestCollision, true)) {

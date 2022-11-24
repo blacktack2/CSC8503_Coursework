@@ -71,6 +71,7 @@ namespace NCL {
 		static bool RayBoxIntersection(const Ray&r, const Vector3& boxPos, const Vector3& boxSize, RayCollision& collision);
 
 		static Ray BuildRayFromMouse(const Camera& c);
+		static Ray BuildRayFromCamera(const Camera& c);
 
 		static bool RayIntersection(const Ray&r, GameObject& object, RayCollision &collisions);
 
