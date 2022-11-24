@@ -28,6 +28,8 @@ namespace NCL::Maths {
 	public:
 		constexpr Vector3(void) : x(0.0f), y(0.0f), z(0.0f) {}
 
+		explicit constexpr Vector3(float val) : x(val), y(val), z(val) {}
+
 		constexpr Vector3(float xVal, float yVal, float zVal) : x(xVal), y(yVal), z(zVal) {}
 
 		Vector3(const Vector2& v2, float z = 0.0f);
