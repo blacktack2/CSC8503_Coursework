@@ -45,6 +45,10 @@ void PhysicsObject::ClearForces() {
 	torque				= Vector3();
 }
 
+void NCL::CSC8503::PhysicsObject::InitAxisAlignedInertia() {
+	inverseInertia = Vector3(0.0f);
+}
+
 void PhysicsObject::InitCubeInertia() {
 	Vector3 dimensions	= transform->GetScale();
 

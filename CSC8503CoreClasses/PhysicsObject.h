@@ -56,6 +56,7 @@ namespace NCL {
 				angularVelocity = v;
 			}
 
+			void InitAxisAlignedInertia();
 			void InitCubeInertia();
 			void InitSphereInertia();
 			void InitSphereInertiaHollow();
