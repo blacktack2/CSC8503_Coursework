@@ -138,54 +138,49 @@ bool CollisionDetection::RaySphereIntersection(const Ray&r, const Transform& wor
 bool CollisionDetection::RayCapsuleIntersection(const Ray& r, const Transform& worldTransform, const CapsuleVolume& volume, RayCollision& collision) {
 	Vector3 position = worldTransform.GetPosition();
 	Quaternion orientation = worldTransform.GetOrientation();
-	float capsuleRadius = volume.GetRadius();
+	float capsuleRadius = volume.GetRadius() / 2;
 	float halfHeight = volume.GetHalfHeight();
+
+	Matrix3 transform = Matrix3(orientation);
+	Matrix3 invTransform = Matrix3(orientation.Conjugate());
+
+	Vector3 localRayPos = invTransform * r.GetPosition();
+	Vector3 localRayDir = invTransform * r.GetDirection();
 
 	Vector3 spherePosA = position + orientation * Vector3(0,  (halfHeight - capsuleRadius), 0);
 	Vector3 spherePosB = position + orientation * Vector3(0, -(halfHeight - capsuleRadius), 0);
+	Vector3 bodyPos = invTransform * position;
 
 	Vector3 dirA = spherePosA - r.GetPosition();
 	Vector3 dirB = spherePosB - r.GetPosition();
+	Vector3 dirBody = bodyPos - localRayPos;
 
 	float sphereProjA = Vector3::Dot(dirA, r.GetDirection());
 	float sphereProjB = Vector3::Dot(dirB, r.GetDirection());
+	float bodyProj = Vector3::Dot(dirBody, localRayDir);
 
-	if (sphereProjA < 0.0f && sphereProjB < 0.0f) {
+	if (sphereProjA < 0.0f && sphereProjB < 0.0f && bodyProj < 0.0f) {
 		return false;
 	}
 
 	Vector3 pointA = r.GetPosition() + (r.GetDirection() * sphereProjA);
 	Vector3 pointB = r.GetPosition() + (r.GetDirection() * sphereProjB);
+	Vector3 pointBody = localRayPos + (localRayDir * bodyProj);
 
 	float sphereDistA = (pointA - spherePosA).Length();
 	float sphereDistB = (pointB - spherePosB).Length();
+	float bodyDist = (pointBody - bodyPos).Length();
 
-	Matrix3 transform = Matrix3(orientation);
-	Matrix3 invTransform = Matrix3(orientation.Conjugate());
-
-	Vector3 localRayPos = r.GetPosition() - position;
-	Ray tempRay = Ray(invTransform * localRayPos, invTransform * r.GetDirection());
-
-	RayCollision segCollision;
-	bool intersectSegment = false;// RayBoxIntersection(tempRay, Vector3(), Vector3(capsuleRadius * 0.5f, halfHeight - capsuleRadius * 2, capsuleRadius * 0.5f), segCollision);
-
-	if (sphereDistA > capsuleRadius && sphereDistB > capsuleRadius && !intersectSegment) {
+	if (sphereDistA > capsuleRadius && sphereDistB > capsuleRadius && bodyDist > capsuleRadius) {
 		return false;
 	}
 	DBL_MAX;
 	float rayDistanceA = sphereDistA > capsuleRadius ? FLT_MAX : (sphereProjA - sqrt((capsuleRadius * capsuleRadius) - (sphereDistA * sphereDistA)));
 	float rayDistanceB = sphereDistB > capsuleRadius ? FLT_MAX : (sphereProjB - sqrt((capsuleRadius * capsuleRadius) - (sphereDistB * sphereDistB)));
+	float rayDistanceBody = bodyDist > capsuleRadius ? FLT_MAX : (bodyProj - sqrt((capsuleRadius * capsuleRadius) - (bodyDist * bodyDist)));
 
-	if (intersectSegment && segCollision.rayDistance < rayDistanceA && segCollision.rayDistance < rayDistanceB) {
-		collision.rayDistance = segCollision.rayDistance;
-		collision.collidedAt = (transform * segCollision.collidedAt) + position;
-	} else if (rayDistanceA < rayDistanceB) {
-		collision.rayDistance = rayDistanceA;
-		collision.collidedAt = r.GetPosition() + (r.GetDirection() * collision.rayDistance);
-	} else {
-		collision.rayDistance = rayDistanceB;
-		collision.collidedAt = r.GetPosition() + (r.GetDirection() * collision.rayDistance);
-	}
+	collision.rayDistance = std::min(std::min(rayDistanceA, rayDistanceB), rayDistanceBody);
+	collision.collidedAt = r.GetPosition() + (r.GetDirection() * collision.rayDistance);
 
 	return true;
 }
