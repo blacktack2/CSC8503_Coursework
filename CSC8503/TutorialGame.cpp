@@ -454,7 +454,7 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 	float sphereRadius = 1.0f;
 	Vector3 cubeDims = Vector3(1, 1, 1);
 	float capsuleHeight = 1.0f;
-	float capsuleRadius = 0.5f;
+	float capsuleRadius = 1.0f;
 
 	for (int x = 0; x < numCols; ++x) {
 		for (int z = 0; z < numRows; ++z) {
