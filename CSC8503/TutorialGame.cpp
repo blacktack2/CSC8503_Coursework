@@ -501,10 +501,6 @@ bool TutorialGame::SelectObject() {
 		if (selectionObject) {	//set colour to deselected;
 			selectionObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
 			selectionObject = nullptr;
-			if (selectionLookatObject) {
-				selectionLookatObject->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-				selectionLookatObject = nullptr;
-			}
 		}
 
 		Ray ray = CollisionDetection::BuildRayFromCamera(*world->GetMainCamera());
@@ -518,15 +514,6 @@ bool TutorialGame::SelectObject() {
 			Debug::DrawLine(ray.GetPosition(), closestCollision.collidedAt, Vector4(0, 0, 1, 1), 5.0f);
 
 			Ray objectRay = Ray(selectionObject->GetTransform().GetPosition(), selectionObject->GetTransform().GetOrientation() * Vector3(0, 0, 1), selectionObject->GetBoundingVolume()->layer);
-
-			RayCollision closestObjectCollision;
-			if (world->Raycast(objectRay, closestObjectCollision, true)) {
-				selectionLookatObject = (GameObject*)closestObjectCollision.node;
-
-				selectionLookatObject->GetRenderObject()->SetColour(Vector4(0.5, 0.5, 1, 1));
-
-				Debug::DrawLine(objectRay.GetPosition(), closestObjectCollision.collidedAt, Vector4(0.5, 0.5, 1, 1), 5.0f);
-			}
 			return true;
 		}
 		else {
