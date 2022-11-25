@@ -138,11 +138,19 @@ void TutorialGame::UpdateGame(float dt) {
 
 void TutorialGame::UpdateKeys() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
-		InitWorld(); //We can reset the simulation at any time with F1
-		selectionObject = nullptr;
+		InitWorld(InitMode::MIXED_GRID);
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2)) {
+		InitWorld(InitMode::CUBE_GRID);
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3)) {
+		InitWorld(InitMode::SPHERE_GRID);
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F4)) {
+		InitWorld(InitMode::BRIDGE_TEST);
 	}
 
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2)) {
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::P)) {
 		InitCamera(); //F2 will reset the camera to a specific default place
 	}
 
@@ -154,9 +162,6 @@ void TutorialGame::UpdateKeys() {
 	//bias in the calculations - the same objects might keep 'winning' the constraint
 	//allowing the other one to stretch too much etc. Shuffling the order so that it
 	//is random every frame can help reduce such bias.
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F9)) {
-		world->ShuffleConstraints(true);
-	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) {
 		world->ShuffleConstraints(false);
 	}
@@ -251,14 +256,21 @@ void TutorialGame::InitCamera() {
 	lockedObject = nullptr;
 }
 
-void TutorialGame::InitWorld() {
+void TutorialGame::InitWorld(InitMode mode) {
 	world->ClearAndErase();
 	physics->Clear();
 
-	InitMixedGridWorld(15, 15, 3.5f, 3.5f);
+	switch (mode) {
+		case InitMode::MIXED_GRID : InitMixedGridWorld(15, 15, 3.5f, 3.5f); break;
+		case InitMode::CUBE_GRID  : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1)); break;
+		case InitMode::SPHERE_GRID: InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f); break;
+		case InitMode::BRIDGE_TEST: InitBridgeConstraintTestWorld(10, 20, 30); break;
+	}
 
 	InitGameExamples();
 	InitDefaultFloor();
+
+	selectionObject = nullptr;
 }
 
 /*
@@ -440,16 +452,6 @@ void TutorialGame::InitGameExamples() {
 	AddBonusToWorld(Vector3(10, 5, 0));
 }
 
-void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {
-	for (int x = 0; x < numCols; ++x) {
-		for (int z = 0; z < numRows; ++z) {
-			Vector3 position = Vector3(x * colSpacing, 10.0f, z * rowSpacing);
-			AddSphereToWorld(position, radius, 1.0f);
-		}
-	}
-	AddFloorToWorld(Vector3(0, -2, 0));
-}
-
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
 	float sphereRadius = 1.0f;
 	Vector3 cubeDims = Vector3(1, 1, 1);
@@ -470,12 +472,44 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 }
 
 void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims) {
-	for (int x = 1; x < numCols+1; ++x) {
-		for (int z = 1; z < numRows+1; ++z) {
+	for (int x = 0; x < numCols; ++x) {
+		for (int z = 0; z < numRows; ++z) {
 			Vector3 position = Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 			AddCubeToWorld(position, cubeDims, 1.0f);
 		}
 	}
+}
+
+void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {
+	for (int x = 0; x < numCols; ++x) {
+		for (int z = 0; z < numRows; ++z) {
+			Vector3 position = Vector3(x * colSpacing, 10.0f, z * rowSpacing);
+			AddSphereToWorld(position, radius, 1.0f);
+		}
+	}
+}
+
+void TutorialGame::InitBridgeConstraintTestWorld(int numLinks, float cubeDistance, float maxDistance) {
+	Vector3 cubeSize = Vector3(8);
+
+	float invCubeMass = 5.0f;
+	
+	Vector3 startPos = Vector3(-maxDistance * numLinks / 2, 100, 0);
+
+	GameObject* start = AddCubeToWorld(startPos, cubeSize, 0);
+	GameObject* previous = start;
+
+	for (int i = 1; i <= numLinks; i++) {
+		GameObject* block = AddCubeToWorld(startPos + Vector3(i * cubeDistance, 0, 0), cubeSize, invCubeMass);
+		PositionConstraint* constraint = new PositionConstraint(previous, block, maxDistance);
+		world->AddConstraint(constraint);
+
+		previous = block;
+	}
+
+	GameObject* end = AddCubeToWorld(startPos + Vector3((numLinks + 1) * cubeDistance, 0, 0), cubeSize, 0);
+	PositionConstraint* constraint = new PositionConstraint(previous, end, maxDistance);
+	world->AddConstraint(constraint);
 }
 
 /*

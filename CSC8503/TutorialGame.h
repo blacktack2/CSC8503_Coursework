@@ -17,12 +17,18 @@ namespace NCL {
 			virtual void UpdateGame(float dt);
 
 		protected:
+			enum class InitMode {
+				MIXED_GRID,
+				CUBE_GRID,
+				SPHERE_GRID,
+				BRIDGE_TEST
+			};
 			void InitialiseAssets();
 
 			void InitCamera();
 			void UpdateKeys();
 
-			void InitWorld();
+			void InitWorld(InitMode mode = InitMode::MIXED_GRID);
 
 			/*
 			These are some of the world/object creation functions I created when testing the functionality
@@ -31,9 +37,10 @@ namespace NCL {
 			*/
 			void InitGameExamples();
 
-			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
 			void InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims);
+			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
+			void InitBridgeConstraintTestWorld(int numLinks, float cubeDistance, float maxDistance);
 
 			void InitDefaultFloor();
 
