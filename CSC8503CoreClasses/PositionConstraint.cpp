@@ -26,24 +26,24 @@ void PositionConstraint::UpdateConstraint(float dt)	{
 	float offset = distance - currentDistance;
 
 	if (std::abs(offset) > 0.0f) {
-		Vector3 offsetDir = relativePos.Normalised();
+		Vector3 offsetDir = relativePos / currentDistance;
 
 		PhysicsObject* physA = objectA->GetPhysicsObject();
 		PhysicsObject* physB = objectB->GetPhysicsObject();
 
-		Vector3 relativeVelocity = physA->GetLinearVelocity() - physB->GetLinearVelocity();
-
 		float constraintMass = physA->GetInverseMass() + physB->GetInverseMass();
 
 		if (constraintMass > 0.0f) {
+			Vector3 relativeVelocity = physA->GetLinearVelocity() - physB->GetLinearVelocity();
+
 			float velocityDot = Vector3::Dot(relativeVelocity, offsetDir);
 			float biasFactor = 0.01f;
 			float bias = -(biasFactor / dt) * offset;
 
-			float lambda = -(velocityDot + bias) / constraintMass;
+			float lagrangeMultiplier = -(velocityDot + bias) / constraintMass;
 
-			Vector3 aImpulse = offsetDir * lambda;
-			Vector3 bImpulse = -offsetDir * lambda;
+			Vector3 aImpulse = offsetDir * lagrangeMultiplier;
+			Vector3 bImpulse = -offsetDir * lagrangeMultiplier;
 
 			physA->ApplyLinearImpulse(aImpulse);
 			physB->ApplyLinearImpulse(bImpulse);
