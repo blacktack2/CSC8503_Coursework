@@ -1,14 +1,14 @@
 #pragma once
 #include "Constraint.h"
+#include "Transform.h"
 
 namespace NCL {
 	namespace CSC8503 {
 		class GameObject;
 
-		class OrientationConstraint : public Constraint
-		{
+		class OrientationConstraint : public Constraint {
 		public:
-			OrientationConstraint(GameObject* a, GameObject* b);
+			OrientationConstraint(GameObject* a, GameObject* b, Vector3 forward = Vector3(0, 0, 1));
 			~OrientationConstraint();
 
 			void UpdateConstraint(float dt) override;
@@ -17,7 +17,7 @@ namespace NCL {
 			GameObject* objectA;
 			GameObject* objectB;
 
-			float distance;
+			Vector3 forward;
 		};
 	}
 }

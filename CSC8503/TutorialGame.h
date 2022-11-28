@@ -21,7 +21,8 @@ namespace NCL {
 				MIXED_GRID,
 				CUBE_GRID,
 				SPHERE_GRID,
-				BRIDGE_TEST
+				BRIDGE_TEST,
+				BRIDGE_TEST_ANG
 			};
 			void InitialiseAssets();
 
@@ -40,7 +41,7 @@ namespace NCL {
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
 			void InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims);
 			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
-			void InitBridgeConstraintTestWorld(int numLinks, float cubeDistance, float maxDistance);
+			void InitBridgeConstraintTestWorld(int numLinks, float cubeDistance, float maxDistance, bool isOrientation);
 
 			void InitDefaultFloor();
 

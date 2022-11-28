@@ -249,8 +249,8 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 
 	float impulseForce = Vector3::Dot(contactVelocity, p.normal);
 
-	Vector3 inertiaA = Vector3::Cross(physA->GetInertiaTensor() * Vector3::Cross(relativeA, p.normal), relativeA);
-	Vector3 inertiaB = Vector3::Cross(physB->GetInertiaTensor() * Vector3::Cross(relativeB, p.normal), relativeB);
+	Vector3 inertiaA = Vector3::Cross(physA->GetInverseInertiaTensor() * Vector3::Cross(relativeA, p.normal), relativeA);
+	Vector3 inertiaB = Vector3::Cross(physB->GetInverseInertiaTensor() * Vector3::Cross(relativeB, p.normal), relativeB);
 
 	float angularEffect = Vector3::Dot(inertiaA + inertiaB, p.normal);
 
@@ -325,7 +325,7 @@ void PhysicsSystem::IntegrateAccel(float dt) {
 
 		object->UpdateInertiaTensor();
 
-		Vector3 angAccel = object->GetInertiaTensor() * torque;
+		Vector3 angAccel = object->GetInverseInertiaTensor() * torque;
 
 		angVel += angAccel * dt;
 		object->SetAngularVelocity(angVel);

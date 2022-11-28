@@ -90,5 +90,7 @@ void PhysicsObject::UpdateInertiaTensor() {
 	Matrix3 invOrientation	= Matrix3(q.Conjugate());
 	Matrix3 orientation		= Matrix3(q);
 
-	inverseInteriaTensor = orientation * Matrix3::Scale(inverseInertia) *invOrientation;
+	inverseInteriaTensor = orientation * Matrix3::Scale(inverseInertia) * invOrientation;
+	Vector3 inertia = Vector3(1.0f / inverseInertia.x, 1.0f / inverseInertia.y, 1.0f / inverseInertia.z);
+	inertiaTensor = invOrientation * Matrix3::Scale(inertia) * orientation;
 }

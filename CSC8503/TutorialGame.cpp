@@ -149,6 +149,9 @@ void TutorialGame::UpdateKeys() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F4)) {
 		InitWorld(InitMode::BRIDGE_TEST);
 	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) {
+		InitWorld(InitMode::BRIDGE_TEST_ANG);
+	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::P)) {
 		InitCamera(); //F2 will reset the camera to a specific default place
@@ -261,10 +264,11 @@ void TutorialGame::InitWorld(InitMode mode) {
 	physics->Clear();
 
 	switch (mode) {
-		case InitMode::MIXED_GRID : InitMixedGridWorld(15, 15, 3.5f, 3.5f); break;
-		case InitMode::CUBE_GRID  : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1)); break;
-		case InitMode::SPHERE_GRID: InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f); break;
-		case InitMode::BRIDGE_TEST: InitBridgeConstraintTestWorld(10, 20, 30); break;
+		case InitMode::MIXED_GRID      : InitMixedGridWorld(15, 15, 3.5f, 3.5f)           ; break;
+		case InitMode::CUBE_GRID       : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1)); break;
+		case InitMode::SPHERE_GRID     : InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f)    ; break;
+		case InitMode::BRIDGE_TEST     : InitBridgeConstraintTestWorld(10, 20, 30, false) ; break;
+		case InitMode::BRIDGE_TEST_ANG : InitBridgeConstraintTestWorld(10, 20, 30, true)  ; break;
 	}
 
 	InitGameExamples();
@@ -489,27 +493,27 @@ void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacin
 	}
 }
 
-void TutorialGame::InitBridgeConstraintTestWorld(int numLinks, float cubeDistance, float maxDistance) {
-	Vector3 cubeSize = Vector3(8);
+void TutorialGame::InitBridgeConstraintTestWorld(int numLinks, float cubeDistance, float maxDistance, bool isOrientation) {
+	Vector3 size = Vector3(8);
 
-	float invCubeMass = 5.0f;
+	float invMass = 5.0f;
 	
 	Vector3 startPos = Vector3(-maxDistance * numLinks / 2, 100, 0);
 
-	GameObject* start = AddCubeToWorld(startPos, cubeSize, 0);
+	GameObject* start = isOrientation ? AddSphereToWorld(startPos, size.x, 0) : AddCubeToWorld(startPos, size, 0);
 	GameObject* previous = start;
 
 	for (int i = 1; i <= numLinks; i++) {
-		GameObject* block = AddCubeToWorld(startPos + Vector3(i * cubeDistance, 0, 0), cubeSize, invCubeMass);
-		PositionConstraint* constraint = new PositionConstraint(previous, block, maxDistance);
-		world->AddConstraint(constraint);
+		GameObject* block = isOrientation ? AddSphereToWorld(startPos + Vector3(i * cubeDistance, 0, invMass), size.x, invMass) : AddCubeToWorld(startPos + Vector3(i * cubeDistance, 0, 0), size, invMass);
+		world->AddConstraint(new PositionConstraint(previous, block, maxDistance));
+		if (isOrientation)
+			world->AddConstraint(new OrientationConstraint(previous, block));
 
 		previous = block;
 	}
 
-	GameObject* end = AddCubeToWorld(startPos + Vector3((numLinks + 1) * cubeDistance, 0, 0), cubeSize, 0);
-	PositionConstraint* constraint = new PositionConstraint(previous, end, maxDistance);
-	world->AddConstraint(constraint);
+	GameObject* end = isOrientation ? AddSphereToWorld(startPos + Vector3((numLinks + 1) * cubeDistance, 0, 0), size.x, 0) : AddCubeToWorld(startPos + Vector3((numLinks + 1) * cubeDistance, 0, 0), size, 0);
+	world->AddConstraint(new PositionConstraint(previous, end, maxDistance));
 }
 
 /*
