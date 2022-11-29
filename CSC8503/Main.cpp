@@ -31,6 +31,36 @@ using namespace CSC8503;
 #include <thread>
 #include <sstream>
 
+void TestStateMachine() {
+	StateMachine* testMachine = new StateMachine();
+	int data = 0;
+
+	State* A = new State([&](float dt)->void {
+		std::cout << "In state A\n";
+		data++;
+	});
+	State* B = new State([&](float dt)->void {
+		std::cout << "In state B\n";
+		data--;
+	});
+
+	StateTransition* stateAB = new StateTransition(A, B, [&](void)->bool {
+		return data > 10;
+	});
+	StateTransition* stateBA = new StateTransition(B, A, [&](void)->bool {
+		return data < 0;
+	});
+
+	testMachine->AddState(A);
+	testMachine->AddState(B);
+	testMachine->AddTransition(stateAB);
+	testMachine->AddTransition(stateBA);
+
+	for (int i = 0; i < 100; i++) {
+		testMachine->Update(1.0f);
+	}
+}
+
 void TestPathfinding() {
 }
 
@@ -50,6 +80,8 @@ hide or show the
 
 */
 int main() {
+	//TestStateMachine();
+
 	Window*w = Window::CreateGameWindow("CSC8503 Game technology!", 1280, 720);
 
 	if (!w->HasInitialised()) {
