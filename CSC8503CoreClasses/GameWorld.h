@@ -4,6 +4,8 @@
 #include "Ray.h"
 #include "CollisionDetection.h"
 #include "QuadTree.h"
+#include "StateMachine.h"
+
 namespace NCL {
 		class Camera;
 		using Maths::Ray;
@@ -27,6 +29,9 @@ namespace NCL {
 
 			void AddConstraint(Constraint* c);
 			void RemoveConstraint(Constraint* c, bool andDelete = false);
+
+			void AddStateMachine(StateMachine* s);
+			void RemoveStateMachine(StateMachine* s, bool andDelete = false);
 
 			Camera* GetMainCamera() const {
 				return mainCamera;
@@ -61,6 +66,7 @@ namespace NCL {
 		protected:
 			std::vector<GameObject*> gameObjects;
 			std::vector<Constraint*> constraints;
+			std::vector<StateMachine*> stateMachines;
 
 			Camera* mainCamera;
 

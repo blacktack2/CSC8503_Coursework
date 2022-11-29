@@ -23,6 +23,7 @@ GameWorld::~GameWorld()	{
 void GameWorld::Clear() {
 	gameObjects.clear();
 	constraints.clear();
+	stateMachines.clear();
 	worldIDCounter		= 0;
 	worldStateCounter	= 0;
 }
@@ -32,6 +33,9 @@ void GameWorld::ClearAndErase() {
 		delete i;
 	}
 	for (auto& i : constraints) {
+		delete i;
+	}
+	for (auto& i : stateMachines) {
 		delete i;
 	}
 	Clear();
@@ -77,6 +81,10 @@ void GameWorld::UpdateWorld(float dt) {
 
 	if (shuffleConstraints) {
 		std::shuffle(constraints.begin(), constraints.end(), e);
+	}
+
+	for (auto& i : stateMachines) {
+		i->Update(dt);
 	}
 }
 
@@ -128,6 +136,17 @@ void GameWorld::RemoveConstraint(Constraint* c, bool andDelete) {
 	constraints.erase(std::remove(constraints.begin(), constraints.end(), c), constraints.end());
 	if (andDelete) {
 		delete c;
+	}
+}
+
+void NCL::CSC8503::GameWorld::AddStateMachine(StateMachine* s) {
+	stateMachines.emplace_back(s);
+}
+
+void NCL::CSC8503::GameWorld::RemoveStateMachine(StateMachine* s, bool andDelete) {
+	stateMachines.erase(std::remove(stateMachines.begin(), stateMachines.end(), s), stateMachines.end());
+	if (andDelete) {
+		delete s;
 	}
 }
 

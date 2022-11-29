@@ -69,12 +69,12 @@ TutorialGame::~TutorialGame()	{
 
 void TutorialGame::UpdateGame(float dt) {
 	Vector2 screenSize = Window::GetWindow()->GetScreenSize();
-	Vector3 crossPos = CollisionDetection::Unproject(Vector3(screenSize * 0.5f, 0.1f), *world->GetMainCamera());
-	Debug::DrawAxisLines(Matrix4::Translation(crossPos), 0.01f);
 
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
 	}
+	Vector3 crossPos = CollisionDetection::Unproject(Vector3(screenSize * 0.5f, 0.99f), *world->GetMainCamera());
+	Debug::DrawAxisLines(Matrix4::Translation(crossPos), 1.0f);
 	if (lockedObject != nullptr) {
 		Vector3 objPos = lockedObject->GetTransform().GetPosition();
 		Vector3 camPos = objPos + lockedOffset;
@@ -379,6 +379,26 @@ GameObject* NCL::CSC8503::TutorialGame::AddCapsuleToWorld(const Vector3& positio
 	return capsule;
 }
 
+StateGameObject* NCL::CSC8503::TutorialGame::AddStateObjectToWorld(const Vector3& position) {
+	static int id = 0;
+	StateGameObject* sgo = new StateGameObject(std::string("StateGameObject").append(std::to_string(id++)));
+	SphereVolume* volume = new SphereVolume(1.0f);
+
+	sgo->SetBoundingVolume((CollisionVolume*)volume);
+	sgo->SetRenderObject(new RenderObject(&sgo->GetTransform(), sphereMesh, basicTex, basicShader));
+	sgo->SetPhysicsObject(new PhysicsObject(&sgo->GetTransform(), sgo->GetBoundingVolume()));
+
+	sgo->GetTransform().SetPosition(position);
+
+	sgo->GetPhysicsObject()->SetInverseMass(5.0f);
+	sgo->GetPhysicsObject()->InitSphereInertia();
+
+	world->AddGameObject(sgo);
+	world->AddStateMachine(sgo->GetStateMachine());
+
+	return sgo;
+}
+
 GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) {
 	float meshSize		= 1.0f;
 	float inverseMass	= 0.5f;
@@ -455,6 +475,7 @@ void TutorialGame::InitGameExamples() {
 	AddPlayerToWorld(Vector3(0, 5, 0));
 	AddEnemyToWorld(Vector3(5, 5, 0));
 	AddBonusToWorld(Vector3(10, 5, 0));
+	AddStateObjectToWorld(Vector3(400, 20, 0));
 }
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
