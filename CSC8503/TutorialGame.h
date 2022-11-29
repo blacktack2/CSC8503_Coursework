@@ -22,7 +22,8 @@ namespace NCL {
 				CUBE_GRID,
 				SPHERE_GRID,
 				BRIDGE_TEST,
-				BRIDGE_TEST_ANG
+				BRIDGE_TEST_ANG,
+				PERFORMANCE_TEST
 			};
 			void InitialiseAssets();
 

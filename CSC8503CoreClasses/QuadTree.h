@@ -42,15 +42,56 @@ namespace NCL {
 			}
 
 			void Insert(T& object, const Vector3& objectPos, const Vector3& objectSize, int depthLeft, int maxSize) {
+				if (!CollisionDetection::AABBTest(objectPos, Vector3(position.x, 0, position.y), objectSize, Vector3(size.x, 1000.0f, size.y))) {
+					return;
+				}
+				if (children) {
+					for (int i = 0; i < 4; i++) {
+						children[i].Insert(object, objectPos, objectSize, depthLeft - 1, maxSize);
+					}
+				} else {
+					contents.push_back(QuadTreeEntry<T>(object, objectPos, objectSize));
+					if ((int)contents.size() > maxSize && depthLeft > 0 && !children) {
+						Split();
+						for (const auto& i : contents) {
+							for (int j = 0; j < 4; j++) {
+								auto entry = i;
+								children[j].Insert(entry.object, entry.pos, entry.size, depthLeft - 1, maxSize);
+							}
+						}
+						contents.clear();
+					}
+				}
 			}
 
 			void Split() {
+				Vector2 halfSize = size * 0.5f;
+				children = new QuadTreeNode<T>[4]{
+					QuadTreeNode<T>(position + Vector2(-1,  1) * halfSize, halfSize),
+					QuadTreeNode<T>(position + Vector2( 1,  1) * halfSize, halfSize),
+					QuadTreeNode<T>(position + Vector2(-1, -1) * halfSize, halfSize),
+					QuadTreeNode<T>(position + Vector2( 1, -1) * halfSize, halfSize),
+				};
 			}
 
 			void DebugDraw() {
+				if (children) {
+					for (int i = 0; i < 4; i++) {
+						children[i].DebugDraw();
+					}
+				} else {
+					Debug::DrawLine(Vector3(position.x, -1000, position.y), Vector3(position.x, 1000, position.y), Vector4());
+				}
 			}
 
 			void OperateOnContents(QuadTreeFunc& func) {
+				if (children) {
+					for (int i = 0; i < 4; i++) {
+						children[i].OperateOnContents(func);
+					}
+				} else if (!contents.empty()) {
+					func(contents);
+				}
 			}
 
 		protected:

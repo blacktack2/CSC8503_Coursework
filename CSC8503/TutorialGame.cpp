@@ -70,9 +70,7 @@ TutorialGame::~TutorialGame()	{
 void TutorialGame::UpdateGame(float dt) {
 	Vector2 screenSize = Window::GetWindow()->GetScreenSize();
 	Vector3 crossPos = CollisionDetection::Unproject(Vector3(screenSize * 0.5f, 0.1f), *world->GetMainCamera());
-	Debug::DrawLine(crossPos, crossPos + Vector3(0.01f, 0, 0), Vector4(1, 0, 0, 1));
-	Debug::DrawLine(crossPos, crossPos + Vector3(0, 0.01f, 0), Vector4(0, 1, 0, 1));
-	Debug::DrawLine(crossPos, crossPos + Vector3(0, 0, 0.01f), Vector4(0, 0, 1, 1));
+	Debug::DrawAxisLines(Matrix4::Translation(crossPos), 0.01f);
 
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
@@ -97,8 +95,7 @@ void TutorialGame::UpdateGame(float dt) {
 
 	if (useGravity) {
 		Debug::Print("(G)ravity on", Vector2(5, 95), Debug::RED);
-	}
-	else {
+	} else {
 		Debug::Print("(G)ravity off", Vector2(5, 95), Debug::RED);
 	}
 
@@ -151,6 +148,9 @@ void TutorialGame::UpdateKeys() {
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) {
 		InitWorld(InitMode::BRIDGE_TEST_ANG);
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F6)) {
+		InitWorld(InitMode::PERFORMANCE_TEST);
 	}
 
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::P)) {
@@ -264,11 +264,12 @@ void TutorialGame::InitWorld(InitMode mode) {
 	physics->Clear();
 
 	switch (mode) {
-		case InitMode::MIXED_GRID      : InitMixedGridWorld(15, 15, 3.5f, 3.5f)           ; break;
-		case InitMode::CUBE_GRID       : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1)); break;
-		case InitMode::SPHERE_GRID     : InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f)    ; break;
-		case InitMode::BRIDGE_TEST     : InitBridgeConstraintTestWorld(10, 20, 30, false) ; break;
-		case InitMode::BRIDGE_TEST_ANG : InitBridgeConstraintTestWorld(10, 20, 30, true)  ; break;
+		case InitMode::MIXED_GRID       : InitMixedGridWorld(15, 15, 3.5f, 3.5f)           ; break;
+		case InitMode::CUBE_GRID        : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1)); break;
+		case InitMode::SPHERE_GRID      : InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f)    ; break;
+		case InitMode::BRIDGE_TEST      : InitBridgeConstraintTestWorld(10, 20, 30, false) ; break;
+		case InitMode::BRIDGE_TEST_ANG  : InitBridgeConstraintTestWorld(10, 20, 30, true)  ; break;
+		case InitMode::PERFORMANCE_TEST : InitMixedGridWorld(30, 30, 10.0f, 10.0f)         ; break;
 	}
 
 	InitGameExamples();
@@ -461,10 +462,11 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 	Vector3 cubeDims = Vector3(1, 1, 1);
 	float capsuleHeight = 1.0f;
 	float capsuleRadius = 1.0f;
+	Vector3 offset = Vector3(numRows * rowSpacing, 0, numCols * colSpacing) * -0.5;
 
 	for (int x = 0; x < numCols; ++x) {
 		for (int z = 0; z < numRows; ++z) {
-			Vector3 position = Vector3(x * colSpacing, 10.0f, z * rowSpacing);
+			Vector3 position = offset + Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 
 			switch (rand() % 3) {
 				case 0: AddCubeToWorld(position, cubeDims); break;
@@ -476,18 +478,20 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 }
 
 void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims) {
+	Vector3 offset = Vector3(numRows * rowSpacing, 0, numCols * colSpacing) * -0.5;
 	for (int x = 0; x < numCols; ++x) {
 		for (int z = 0; z < numRows; ++z) {
-			Vector3 position = Vector3(x * colSpacing, 10.0f, z * rowSpacing);
+			Vector3 position = offset + Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 			AddCubeToWorld(position, cubeDims, 1.0f);
 		}
 	}
 }
 
 void TutorialGame::InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius) {
+	Vector3 offset = Vector3(numRows * rowSpacing, 0, numCols * colSpacing) * -0.5;
 	for (int x = 0; x < numCols; ++x) {
 		for (int z = 0; z < numRows; ++z) {
-			Vector3 position = Vector3(x * colSpacing, 10.0f, z * rowSpacing);
+			Vector3 position = offset + Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 			AddSphereToWorld(position, radius, 1.0f);
 		}
 	}
