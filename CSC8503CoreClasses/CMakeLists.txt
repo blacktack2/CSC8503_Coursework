@@ -11,6 +11,8 @@ set(AI_Behaviour_Tree
     "BehaviourSelector.cpp"
     "BehaviourSequence.h"
     "BehaviourSequence.cpp"
+    "BehaviourParallel.h"
+    "BehaviourParallel.cpp"
 )
 source_group("AI\\Behaviour Trees" FILES ${AI_Behaviour_Tree})
 
@@ -43,6 +45,7 @@ source_group("AI\\Pathfinding" FILES ${AI_Pathfinding})
 
 
 set(Collision_Detection
+	"Collision.h"
     "AABBVolume.h"
     "CapsuleVolume.h"  
     "CapsuleVolume.cpp"
