@@ -285,24 +285,34 @@ void TestNetworking() {
 	NetworkBase::Initialise();
 
 	TestPacketReceiver serverReceiver("Server");
-	TestPacketReceiver clientReceiver("Client");
+	TestPacketReceiver clientReceivers[2]{ TestPacketReceiver("Client1"), TestPacketReceiver("Client2") };
 
 	int port = NetworkBase::GetDefaultPort();
 
-	GameServer* server = new GameServer(port, 1);
-	GameClient* client = new GameClient();
+	const int numClients = 2;
+	GameServer* server = new GameServer(port, numClients);
+	GameClient* clients = new GameClient[numClients];
 
 	server->RegisterPacketHandler(String_Message, &serverReceiver);
-	client->RegisterPacketHandler(String_Message, &clientReceiver);
+	for (int i = 0; i < numClients; i++) {
+		clients[i].RegisterPacketHandler(String_Message, &clientReceivers[i]);
+	}
 
-	bool canConnect = client->Connect(127, 0, 0, 1, port);
+	bool canConnect[numClients];
+	for (int i = 0; i < numClients; i++) {
+		canConnect[i] = clients[i].Connect(127, 0, 0, 1, port);
+	}
 
 	for (int i = 0; i < 100; i++) {
 		server->SendGlobalPacket((GamePacket&)StringPacket("Server says hello!" + std::to_string(i)));
-		client->SendPacket((GamePacket&)StringPacket("Client says hello!" + std::to_string(i)));
+		for (int j = 0; j < numClients; j++) {
+			clients[j].SendPacket((GamePacket&)StringPacket("Client says hello!" + std::to_string(i)));
+		}
 
 		server->UpdateServer();
-		client->UpdateClient();
+		for (int j = 0; j < numClients; j++) {
+			clients[j].UpdateClient();
+		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}
@@ -325,7 +335,7 @@ int main() {
 	//TestStateMachine();
 	//TestBehaviourTree();
 	TestPathfinding();
-	TestNetworking();
+	//TestNetworking();
 
 	Window* w = Window::CreateGameWindow("CSC8503 Game technology!", 1280, 720);
 	//TestPushdownAutomata(w);
