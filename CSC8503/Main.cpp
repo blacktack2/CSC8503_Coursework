@@ -262,6 +262,53 @@ void TestPushdownAutomata(Window* w) {
 	}
 }
 
+class TestPacketReceiver : public PacketReceiver {
+public:
+	TestPacketReceiver(std::string name) {
+		this->name = name;
+	}
+
+	void ReceivePacket(int type, GamePacket* payload, int source) {
+		if (type == String_Message) {
+			StringPacket* realPacket = (StringPacket*)payload;
+
+			std::string msg = realPacket->GetStringFromData();
+
+			std::cout << name << " received message: " << msg << "\n";
+		}
+	}
+protected:
+	std::string name;
+};
+
+void TestNetworking() {
+	NetworkBase::Initialise();
+
+	TestPacketReceiver serverReceiver("Server");
+	TestPacketReceiver clientReceiver("Client");
+
+	int port = NetworkBase::GetDefaultPort();
+
+	GameServer* server = new GameServer(port, 1);
+	GameClient* client = new GameClient();
+
+	server->RegisterPacketHandler(String_Message, &serverReceiver);
+	client->RegisterPacketHandler(String_Message, &clientReceiver);
+
+	bool canConnect = client->Connect(127, 0, 0, 1, port);
+
+	for (int i = 0; i < 100; i++) {
+		server->SendGlobalPacket((GamePacket&)StringPacket("Server says hello!" + std::to_string(i)));
+		client->SendPacket((GamePacket&)StringPacket("Client says hello!" + std::to_string(i)));
+
+		server->UpdateServer();
+		client->UpdateClient();
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+	NetworkBase::Destroy();
+}
+
 /*
 
 The main function should look pretty familar to you!
@@ -276,8 +323,9 @@ hide or show the
 */
 int main() {
 	//TestStateMachine();
-	TestBehaviourTree();
-	//TestPathfinding();
+	//TestBehaviourTree();
+	TestPathfinding();
+	TestNetworking();
 
 	Window* w = Window::CreateGameWindow("CSC8503 Game technology!", 1280, 720);
 	//TestPushdownAutomata(w);
