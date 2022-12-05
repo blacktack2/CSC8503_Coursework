@@ -141,15 +141,18 @@ void TutorialGame::UpdateKeys() {
 		InitWorld(InitMode::CUBE_GRID);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3)) {
-		InitWorld(InitMode::SPHERE_GRID);
+		InitWorld(InitMode::OBB_GRID);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F4)) {
-		InitWorld(InitMode::BRIDGE_TEST);
+		InitWorld(InitMode::SPHERE_GRID);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) {
-		InitWorld(InitMode::BRIDGE_TEST_ANG);
+		InitWorld(InitMode::BRIDGE_TEST);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F6)) {
+		InitWorld(InitMode::BRIDGE_TEST_ANG);
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
 		InitWorld(InitMode::PERFORMANCE_TEST);
 	}
 
@@ -264,12 +267,13 @@ void TutorialGame::InitWorld(InitMode mode) {
 	physics->Clear();
 
 	switch (mode) {
-		case InitMode::MIXED_GRID       : InitMixedGridWorld(15, 15, 3.5f, 3.5f)           ; break;
-		case InitMode::CUBE_GRID        : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1)); break;
-		case InitMode::SPHERE_GRID      : InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f)    ; break;
-		case InitMode::BRIDGE_TEST      : InitBridgeConstraintTestWorld(10, 20, 30, false) ; break;
-		case InitMode::BRIDGE_TEST_ANG  : InitBridgeConstraintTestWorld(10, 20, 30, true)  ; break;
-		case InitMode::PERFORMANCE_TEST : InitMixedGridWorld(30, 30, 10.0f, 10.0f)         ; break;
+		case InitMode::MIXED_GRID       : InitMixedGridWorld(15, 15, 3.5f, 3.5f)                  ; break;
+		case InitMode::CUBE_GRID        : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1), true) ; break;
+		case InitMode::OBB_GRID         : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1), false); break;
+		case InitMode::SPHERE_GRID      : InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f)           ; break;
+		case InitMode::BRIDGE_TEST      : InitBridgeConstraintTestWorld(10, 20, 30, false)        ; break;
+		case InitMode::BRIDGE_TEST_ANG  : InitBridgeConstraintTestWorld(10, 20, 30, true)         ; break;
+		case InitMode::PERFORMANCE_TEST : InitMixedGridWorld(30, 30, 10.0f, 10.0f)                ; break;
 	}
 
 	InitGameExamples();
@@ -334,12 +338,11 @@ GameObject* TutorialGame::AddSphereToWorld(const Vector3& position, float radius
 	return sphere;
 }
 
-GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass) {
+GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimensions, float inverseMass, bool axisAligned) {
 	static int id = 0;
 	GameObject* cube = new GameObject(std::string("Cube").append(std::to_string(id++)));
 
-	AABBVolume* volume = new AABBVolume(dimensions);
-	cube->SetBoundingVolume((CollisionVolume*)volume);
+	cube->SetBoundingVolume(axisAligned ? ((CollisionVolume*)new AABBVolume(dimensions)) : ((CollisionVolume*)new OBBVolume(dimensions)));
 
 	cube->GetTransform()
 		.SetPosition(position)
@@ -349,7 +352,11 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	cube->SetPhysicsObject(new PhysicsObject(&cube->GetTransform(), cube->GetBoundingVolume()));
 
 	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
-	cube->GetPhysicsObject()->InitAxisAlignedInertia();
+	if (axisAligned) {
+		cube->GetPhysicsObject()->InitAxisAlignedInertia();
+	} else {
+		cube->GetPhysicsObject()->InitCubeInertia();
+	}
 
 	world->AddGameObject(cube);
 
@@ -489,21 +496,22 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 		for (int z = 0; z < numRows; ++z) {
 			Vector3 position = offset + Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 
-			switch (rand() % 3) {
-				case 0: AddCubeToWorld(position, cubeDims); break;
-				case 1: AddSphereToWorld(position, sphereRadius); break;
-				case 2: AddCapsuleToWorld(position, capsuleHeight, capsuleRadius); break;
+			switch (rand() % 4) {
+				case 0: AddCubeToWorld(position, cubeDims, true); break;
+				case 1: AddCubeToWorld(position, cubeDims, false); break;
+				case 2: AddSphereToWorld(position, sphereRadius); break;
+				case 3: AddCapsuleToWorld(position, capsuleHeight, capsuleRadius); break;
 			}
 		}
 	}
 }
 
-void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims) {
+void TutorialGame::InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims, bool axisAligned) {
 	Vector3 offset = Vector3(numRows * rowSpacing, 0, numCols * colSpacing) * -0.5;
 	for (int x = 0; x < numCols; ++x) {
 		for (int z = 0; z < numRows; ++z) {
 			Vector3 position = offset + Vector3(x * colSpacing, 10.0f, z * rowSpacing);
-			AddCubeToWorld(position, cubeDims, 1.0f);
+			AddCubeToWorld(position, cubeDims, 1.0f, axisAligned);
 		}
 	}
 }
