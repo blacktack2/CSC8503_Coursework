@@ -497,8 +497,8 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 			Vector3 position = offset + Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 
 			switch (rand() % 4) {
-				case 0: AddCubeToWorld(position, cubeDims, true); break;
-				case 1: AddCubeToWorld(position, cubeDims, false); break;
+				case 0: AddCubeToWorld(position, cubeDims, 10.0f, true); break;
+				case 1: AddCubeToWorld(position, cubeDims, 10.0f, false); break;
 				case 2: AddSphereToWorld(position, sphereRadius); break;
 				case 3: AddCapsuleToWorld(position, capsuleHeight, capsuleRadius); break;
 			}
