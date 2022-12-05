@@ -96,6 +96,7 @@ namespace NCL {
 		}
 
 		Vector3 Clamp(const Vector3& a, const Vector3&mins, const Vector3& maxs);
+		Vector3 Abs(const Vector3& v);
 
 		template<class T>
 		inline T Lerp(const T& a, const T&b, float by) {
