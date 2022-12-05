@@ -354,6 +354,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 	cube->GetPhysicsObject()->SetInverseMass(inverseMass);
 	if (axisAligned) {
 		cube->GetPhysicsObject()->InitAxisAlignedInertia();
+		cube->GetRenderObject()->SetColour(Vector4(0.8f, 0.8f, 1, 1));
 	} else {
 		cube->GetPhysicsObject()->InitCubeInertia();
 	}
