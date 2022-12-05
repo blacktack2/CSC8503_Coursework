@@ -59,6 +59,9 @@ namespace NCL {
 			}
 		};
 
+		static void ClosestRayPoints(const Vector3& centerA, const Vector3& dirA, float lenA, const Vector3& centerB, const Vector3& dirB, float lenB,
+			                         Vector3& bestA, Vector3& bestB);
+
 		static bool RayBoxIntersection(const Ray&r, const Vector3& boxPos, const Vector3& boxSize, RayCollision& collision);
 
 		static Ray BuildRayFromMouse(const Camera& c);

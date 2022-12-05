@@ -48,6 +48,43 @@ bool CollisionDetection::RayIntersection(const Ray& r,GameObject& object, RayCol
 	return hasCollided;
 }
 
+void NCL::CollisionDetection::ClosestRayPoints(const Vector3& centerA, const Vector3& dirA, float lenA,
+	const Vector3& centerB, const Vector3& dirB, float lenB,
+	Vector3& bestA, Vector3& bestB) {
+	Vector3 n = -Vector3::Cross(dirA, dirB);
+
+	float t1 = Vector3::Dot(Vector3::Cross(dirB, n), (centerA - centerB)) / n.LengthSquared();
+	float t2 = Vector3::Dot(Vector3::Cross(dirA, n), (centerA - centerB)) / n.LengthSquared();
+
+	bool clampedA = false;
+	bool clampedB = false;
+	if (lenA != 0) {
+		float old = t1;
+		t1 = std::clamp(t1, -lenA, lenA);
+		clampedA = t1 != old;
+	}
+	if (lenB != 0) {
+		float old = t2;
+		t2 = std::clamp(t2, -lenB, lenB);
+		clampedB = t2 != old;
+	}
+
+	if (clampedA && !clampedB) {
+		bestA = centerA + dirA * t1;
+
+		float proj = Vector3::Dot(bestA - centerB, dirB);
+		bestB = centerB + dirB * proj;
+	} else if (clampedB && !clampedA) {
+		bestB = centerB + dirB * t2;
+
+		float proj = Vector3::Dot(bestB - centerA, dirA);
+		bestA = centerA + dirA * proj;
+	} else {
+		bestA = centerA + dirA * t1;
+		bestB = centerB + dirB * t2;
+	}
+}
+
 bool CollisionDetection::RayBoxIntersection(const Ray&r, const Vector3& boxPos, const Vector3& boxSize, RayCollision& collision) {
 	Vector3 boxMin = boxPos - boxSize;
 	Vector3 boxMax = boxPos + boxSize;
@@ -138,57 +175,22 @@ bool CollisionDetection::RaySphereIntersection(const Ray&r, const Transform& wor
 bool CollisionDetection::RayCapsuleIntersection(const Ray& r, const Transform& worldTransform, const CapsuleVolume& volume, RayCollision& collision) {
 	Vector3 position = worldTransform.GetPosition();
 	Quaternion orientation = worldTransform.GetOrientation();
-	float capsuleRadius = volume.GetRadius() / 2.0f;
+	float radius = volume.GetRadius() * 0.5f;
 	float halfHeight = volume.GetHalfHeight();
-
-	float halfRange = halfHeight - capsuleRadius;
 
 	Vector3 capsuleDir = orientation * Vector3(0, 1, 0);
 
-	Vector3 capsuleA = position + capsuleDir *  halfRange;
-	Vector3 capsuleB = position + capsuleDir * -halfRange;
+	Vector3 capsulePoint;
+	Vector3 rayPoint;
+	ClosestRayPoints(position, capsuleDir, halfHeight - radius, r.GetPosition(), r.GetDirection(), 0.0f, capsulePoint, rayPoint);
 
-	Vector3 n = Vector3::Cross(capsuleDir, r.GetDirection());
-	float dist = Vector3::Dot(n, position - r.GetPosition());
-
-	if (std::abs(dist) > capsuleRadius) {
+	float distanceSquared = (rayPoint - capsulePoint).LengthSquared();
+	if (distanceSquared > radius * radius) {
 		return false;
 	}
 
-	float t1 = Vector3::Dot(Vector3::Cross(r.GetDirection(), n), (r.GetPosition() - position)) / n.LengthSquared();
-	float t2 = Vector3::Dot(Vector3::Cross(capsuleDir      , n), (r.GetPosition() - position)) / n.LengthSquared();
-	if (std::abs(t1) > halfRange) {
-		Vector3 capPoint = position + capsuleDir * std::clamp(t1, -halfRange, halfRange);
-
-		float capProj = Vector3::Dot(capPoint - r.GetPosition(), r.GetDirection());
-
-		if (capProj < 0.0f) {
-			return false;
-		}
-
-		Vector3 point = r.GetPosition() + (r.GetDirection() * capProj);
-		float dist = (point - capPoint).LengthSquared();
-
-		if (dist > capsuleRadius * capsuleRadius) {
-			return false;
-		}
-
-		float offset = sqrt((capsuleRadius * capsuleRadius) - dist);
-
-		collision.rayDistance = capProj - offset;
-		collision.collidedAt = r.GetPosition() + (r.GetDirection() * collision.rayDistance);
-	} else {
-		Vector3 capPoint = position + capsuleDir * t1;
-		Vector3 rayPoint = r.GetPosition() + r.GetDirection() * t2;
-
-
-		if ((rayPoint - capPoint).LengthSquared() > capsuleRadius * capsuleRadius) {
-			return false;
-		}
-
-		collision.collidedAt = capPoint + (rayPoint - capPoint) * capsuleRadius;
-		collision.rayDistance = (collision.collidedAt - r.GetPosition()).Length();
-	}
+	collision.rayDistance = (rayPoint - r.GetPosition()).Length();
+	collision.collidedAt = rayPoint;
 	return true;
 }
 
