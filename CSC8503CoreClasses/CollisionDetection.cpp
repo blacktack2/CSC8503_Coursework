@@ -221,7 +221,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 		return CapsuleIntersection((CapsuleVolume&)* volA, transformA, (CapsuleVolume&)* volB, transformB, collisionInfo);
 	}
 
-	if (pairType == (int)VolumeType::AABB | (int)VolumeType::OBB) {
+	if (pairType == ((int)VolumeType::AABB | (int)VolumeType::OBB)) {
 		if (volB->type == VolumeType::AABB) {
 			collisionInfo.a = b;
 			collisionInfo.b = a;
@@ -230,7 +230,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 			return AABBOBBIntersection((AABBVolume&)*volA, transformA, (OBBVolume&)*volB, transformB, collisionInfo);
 		}
 	}
-	if (pairType == (int)VolumeType::AABB | (int)VolumeType::Sphere) {
+	if (pairType == ((int)VolumeType::AABB | (int)VolumeType::Sphere)) {
 		if (volB->type == VolumeType::AABB) {
 			collisionInfo.a = b;
 			collisionInfo.b = a;
@@ -239,7 +239,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 			return AABBSphereIntersection((AABBVolume&)*volA, transformA, (SphereVolume&)*volB, transformB, collisionInfo);
 		}
 	}
-	if (pairType == (int)VolumeType::AABB | (int)VolumeType::Capsule) {
+	if (pairType == ((int)VolumeType::AABB | (int)VolumeType::Capsule)) {
 		if (volB->type == VolumeType::AABB) {
 			collisionInfo.a = b;
 			collisionInfo.b = a;
@@ -249,7 +249,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 		}
 	}
 
-	if (pairType == (int)VolumeType::OBB | (int)VolumeType::Sphere) {
+	if (pairType == ((int)VolumeType::OBB | (int)VolumeType::Sphere)) {
 		if (volB->type == VolumeType::OBB) {
 			collisionInfo.a = b;
 			collisionInfo.b = a;
@@ -258,7 +258,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 			return OBBSphereIntersection((OBBVolume&)*volA, transformA, (SphereVolume&)*volB, transformB, collisionInfo);
 		}
 	}
-	if (pairType == (int)VolumeType::OBB | (int)VolumeType::Capsule) {
+	if (pairType == ((int)VolumeType::OBB | (int)VolumeType::Capsule)) {
 		if (volB->type == VolumeType::OBB) {
 			collisionInfo.a = b;
 			collisionInfo.b = a;
@@ -268,7 +268,7 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 		}
 	}
 
-	if (pairType == (int)VolumeType::Sphere | (int)VolumeType::Capsule) {
+	if (pairType == ((int)VolumeType::Sphere | (int)VolumeType::Capsule)) {
 		if (volB->type == VolumeType::Sphere) {
 			collisionInfo.a = b;
 			collisionInfo.b = a;
@@ -400,6 +400,25 @@ bool NCL::CollisionDetection::AABBCapsuleIntersection(const AABBVolume& volumeA,
 
 bool  CollisionDetection::OBBSphereIntersection(const OBBVolume& volumeA, const Transform& worldTransformA,
 	const SphereVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo) {
+	Vector3 boxSize = volumeA.GetHalfDimensions();
+	Quaternion orientation = worldTransformA.GetOrientation();
+
+	Vector3 obbPos = worldTransformA.GetPosition();
+	Vector3 spherePos = orientation.Conjugate() * (worldTransformB.GetPosition() - obbPos);
+
+	Vector3 closestPointOnBox = Maths::Clamp(spherePos, -boxSize, boxSize);
+
+	Vector3 localPoint = spherePos - closestPointOnBox;
+	float distanceSquared = localPoint.LengthSquared();
+
+	if (distanceSquared < volumeB.GetRadius() * volumeB.GetRadius()) {
+		Vector3 normal = distanceSquared == 0 ? spherePos.Normalised() : localPoint.Normalised();
+		float penetration = volumeB.GetRadius() - std::sqrt(distanceSquared);
+
+		collisionInfo.AddContactPoint(obbPos + orientation * closestPointOnBox, orientation * normal, penetration);
+		return true;
+	}
+
 	return false;
 }
 
