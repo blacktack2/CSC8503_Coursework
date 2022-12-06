@@ -399,7 +399,6 @@ bool NCL::CollisionDetection::CapsuleIntersection(const CapsuleVolume& volumeA, 
 	float penetration = radii - std::sqrt(distanceSquared);
 	Vector3 normal = (pointB - pointA).Normalised();
 	Vector3 collisionPoint = centerA + (normal * (radiusA - (penetration * 0.5f)));
-	Debug::DrawLine(pointA, pointB, Vector4(1, 0, 1, 1), 5);
 
 	collisionInfo.AddContactPoint(collisionPoint, normal, penetration);
 	return true;
@@ -467,7 +466,30 @@ bool NCL::CollisionDetection::OBBCapsuleIntersection(const OBBVolume& volumeA, c
 
 bool NCL::CollisionDetection::SphereCapsuleIntersection(const SphereVolume& volumeA, const Transform& worldTransformA,
 	const CapsuleVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo) {
-	return false;
+	Vector3 sphereCenter = worldTransformA.GetPosition();
+	float sphereRadius = volumeA.GetRadius();
+
+	Vector3 capsuleCenter = worldTransformB.GetPosition();
+	Quaternion capsuleOrientation = worldTransformB.GetOrientation();
+	float capsuleRadius = volumeB.GetRadius() * 0.5f;
+	float capsuleHalfHeight = volumeB.GetHalfHeight();
+	Vector3 capsuleDir = capsuleOrientation * Vector3(0, 1, 0);
+
+	float proj = Vector3::Dot(sphereCenter - capsuleCenter, capsuleDir);
+	Vector3 capsulePos = capsuleCenter + capsuleDir * proj;
+
+	float distanceSquared = (capsulePos - sphereCenter).LengthSquared();
+	float radii = sphereRadius + capsuleRadius;
+	if (distanceSquared > radii * radii) {
+		return false;
+	}
+
+	float penetration = radii - std::sqrt(distanceSquared);
+	Vector3 normal = (capsulePos - sphereCenter).Normalised();
+	Vector3 collisionPoint = sphereCenter + (normal * (sphereRadius - (penetration * 0.5f)));
+
+	collisionInfo.AddContactPoint(collisionPoint, normal, penetration);
+	return true;
 }
 
 Matrix4 GenerateInverseView(const Camera &c) {
