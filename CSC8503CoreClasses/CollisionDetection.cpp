@@ -51,10 +51,16 @@ bool CollisionDetection::RayIntersection(const Ray& r,GameObject& object, RayCol
 void NCL::CollisionDetection::ClosestRayPoints(const Vector3& centerA, const Vector3& dirA, float lenA,
 	const Vector3& centerB, const Vector3& dirB, float lenB,
 	Vector3& bestA, Vector3& bestB) {
-	Vector3 n = -Vector3::Cross(dirA, dirB);
+	float t1, t2;
+	if (dirA == dirB) {
+		t1 = 0;
+		t2 = 0;
+	} else {
+		Vector3 n = -Vector3::Cross(dirA, dirB);
 
-	float t1 = Vector3::Dot(Vector3::Cross(dirB, n), (centerA - centerB)) / n.LengthSquared();
-	float t2 = Vector3::Dot(Vector3::Cross(dirA, n), (centerA - centerB)) / n.LengthSquared();
+		t1 = Vector3::Dot(Vector3::Cross(dirB, n), (centerA - centerB)) / n.LengthSquared();
+		t2 = Vector3::Dot(Vector3::Cross(dirA, n), (centerA - centerB)) / n.LengthSquared();
+	}
 
 	bool clampedA = false;
 	bool clampedB = false;
@@ -366,7 +372,37 @@ bool CollisionDetection::SphereIntersection(const SphereVolume& volumeA, const T
 
 bool NCL::CollisionDetection::CapsuleIntersection(const CapsuleVolume& volumeA, const Transform& worldTransformA,
 	const CapsuleVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo) {
-	return false;
+	Vector3 centerA = worldTransformA.GetPosition();
+	Vector3 centerB = worldTransformB.GetPosition();
+	Quaternion orientationA = worldTransformA.GetOrientation();
+	Quaternion orientationB = worldTransformB.GetOrientation();
+	float radiusA = volumeA.GetRadius() * 0.5f;
+	float radiusB = volumeB.GetRadius() * 0.5f;
+	float halfHeightA = volumeA.GetHalfHeight();
+	float halfHeightB = volumeB.GetHalfHeight();
+
+	float offsetA = halfHeightA - radiusA;
+	float offsetB = halfHeightB - radiusB;
+	Vector3 dirA = orientationA * Vector3(0, 1, 0);
+	Vector3 dirB = orientationB * Vector3(0, 1, 0);
+
+	Vector3 pointA;
+	Vector3 pointB;
+	ClosestRayPoints(centerA, dirA, offsetA, centerB, dirB, offsetB, pointA, pointB);
+
+	float distanceSquared = (pointA - pointB).LengthSquared();
+	float radii = radiusA + radiusB;
+	if (distanceSquared > radii * radii) {
+		return false;
+	}
+
+	float penetration = radii - std::sqrt(distanceSquared);
+	Vector3 normal = (pointB - pointA).Normalised();
+	Vector3 collisionPoint = centerA + (normal * (radiusA - (penetration * 0.5f)));
+	Debug::DrawLine(pointA, pointB, Vector4(1, 0, 1, 1), 5);
+
+	collisionInfo.AddContactPoint(collisionPoint, normal, penetration);
+	return true;
 }
 
 bool NCL::CollisionDetection::AABBOBBIntersection(const AABBVolume& volumeA, const Transform& worldTransformA,
