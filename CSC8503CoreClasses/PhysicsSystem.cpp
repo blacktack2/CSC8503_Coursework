@@ -12,7 +12,7 @@
 using namespace NCL;
 using namespace CSC8503;
 
-PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g)	{
+PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g), quadTree(Vector2(1024, 1024), 7, 6) {
 	applyGravity	= false;
 	dTOffset		= 0.0f;
 	globalDamping	= 0.995f;
@@ -137,6 +137,24 @@ void PhysicsSystem::Update(float dt) {
 		}
 		if (temp != realHZ) {
 			std::cout << "Raising iteration count due to short physics time...(now " << realHZ << ")\n";
+		}
+	}
+}
+
+void NCL::CSC8503::PhysicsSystem::UpdateStaticTree() {
+	quadTree.FullClear();
+
+	std::vector<GameObject*>::const_iterator first;
+	std::vector<GameObject*>::const_iterator last;
+	gameWorld.GetObjectIterators(first, last);
+	for (auto i = first; i != last; i++) {
+		if ((*i)->GetPhysicsObject()->GetInverseMass()) {
+			Vector3 halfSizes;
+			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
+				continue;
+			}
+			Vector3 pos = (*i)->GetTransform().GetPosition();
+			quadTree.Insert(*i, pos, halfSizes, false);
 		}
 	}
 }
@@ -276,7 +294,7 @@ compare the collisions that we absolutely need to.
 */
 void PhysicsSystem::BroadPhase() {
 	broadphaseCollisions.clear();
-	QuadTree<GameObject*> tree(Vector2(1024, 1024), 7, 6);
+	quadTree.Clear();
 
 	std::vector<GameObject*>::const_iterator first;
 	std::vector<GameObject*>::const_iterator last;
@@ -287,10 +305,10 @@ void PhysicsSystem::BroadPhase() {
 			continue;
 		}
 		Vector3 pos = (*i)->GetTransform().GetPosition();
-		tree.Insert(*i, pos, halfSizes);
+		quadTree.Insert(*i, pos, halfSizes, true);
 	}
 
-	tree.OperateOnContents(
+	quadTree.OperateOnContents(
 		[&](std::list<QuadTreeEntry<GameObject*>>& data) {
 			CollisionDetection::CollisionInfo info{};
 			for (auto i = data.begin(); i != data.end(); i++) {

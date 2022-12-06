@@ -41,27 +41,78 @@ namespace NCL {
 				delete[] children;
 			}
 
-			void Insert(T& object, const Vector3& objectPos, const Vector3& objectSize, int depthLeft, int maxSize) {
+			void Insert(T& object, const Vector3& objectPos, const Vector3& objectSize, int depthLeft, int maxSize, bool isDynamic) {
 				if (!CollisionDetection::AABBTest(objectPos, Vector3(position.x, 0, position.y), objectSize, Vector3(size.x, 1000.0f, size.y))) {
 					return;
 				}
 				if (children) {
 					for (int i = 0; i < 4; i++) {
-						children[i].Insert(object, objectPos, objectSize, depthLeft - 1, maxSize);
+						children[i].Insert(object, objectPos, objectSize, depthLeft - 1, maxSize, isDynamic);
 					}
 				} else {
-					contents.push_back(QuadTreeEntry<T>(object, objectPos, objectSize));
-					if ((int)contents.size() > maxSize && depthLeft > 0 && !children) {
+					if (isDynamic) {
+						dynamicContents.push_back(QuadTreeEntry<T>(object, objectPos, objectSize));
+					} else {
+						staticContents.push_back(QuadTreeEntry<T>(object, objectPos, objectSize));
+					}
+					if ((int)(dynamicContents.size() + staticContents.size()) > maxSize && depthLeft > 0 && !children) {
 						Split();
-						for (const auto& i : contents) {
+						for (const auto& i : dynamicContents) {
 							for (int j = 0; j < 4; j++) {
 								auto entry = i;
-								children[j].Insert(entry.object, entry.pos, entry.size, depthLeft - 1, maxSize);
+								children[j].Insert(entry.object, entry.pos, entry.size, depthLeft - 1, maxSize, true);
 							}
 						}
-						contents.clear();
+						dynamicContents.clear();
+						for (const auto& i : staticContents) {
+							for (int j = 0; j < 4; j++) {
+								auto entry = i;
+								children[j].Insert(entry.object, entry.pos, entry.size, depthLeft - 1, maxSize, false);
+							}
+						}
+						staticContents.clear();
 					}
 				}
+			}
+
+			std::list<QuadTreeEntry<T>>* Clear(int maxSize) {
+				if (children) {
+					bool removeChildren = true;
+					std::vector<std::list<QuadTreeEntry<T>>*> childStatics{};
+					for (int i = 0; i < 4; i++) {
+						childStatics.push_back(children[i].Clear(maxSize));
+						removeChildren &= childStatics.back() == nullptr;
+					}
+					if (removeChildren) {
+						for (auto& statics : childStatics) {
+							if (statics == nullptr) {
+								continue;
+							}
+							for (auto& i : *statics) {
+								auto entry = i;
+								staticContents.push_back(i);
+							}
+						}
+
+						delete[] children;
+						children = nullptr;
+					}
+				} else {
+					dynamicContents.clear();
+				}
+				if (staticContents.size() > maxSize) {
+					return &staticContents;
+				} else {
+					return nullptr;
+				}
+			}
+
+			void FullClear() {
+				delete[] children;
+				children = nullptr;
+
+				dynamicContents.clear();
+				staticContents.clear();
 			}
 
 			void Split() {
@@ -89,13 +140,14 @@ namespace NCL {
 					for (int i = 0; i < 4; i++) {
 						children[i].OperateOnContents(func);
 					}
-				} else if (!contents.empty()) {
-					func(contents);
+				} else if (!dynamicContents.empty()) {
+					func(dynamicContents);
 				}
 			}
 
 		protected:
-			std::list< QuadTreeEntry<T> >	contents;
+			std::list<QuadTreeEntry<T>> dynamicContents;
+			std::list<QuadTreeEntry<T>> staticContents;
 
 			Vector2 position;
 			Vector2 size;
@@ -121,8 +173,16 @@ namespace NCL {
 			~QuadTree() {
 			}
 
-			void Insert(T object, const Vector3& pos, const Vector3& size) {
-				root.Insert(object, pos, size, maxDepth, maxSize);
+			void Insert(T object, const Vector3& pos, const Vector3& size, bool isStatic) {
+				root.Insert(object, pos, size, maxDepth, maxSize, isStatic);
+			}
+
+			void Clear() {
+				root.Clear(maxSize);
+			}
+
+			void FullClear() {
+				root.FullClear();
 			}
 
 			void DebugDraw() {

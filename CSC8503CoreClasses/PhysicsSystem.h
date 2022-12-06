@@ -11,6 +11,7 @@ namespace NCL {
 			void Clear();
 
 			void Update(float dt);
+			void UpdateStaticTree();
 
 			void UseGravity(bool state) {
 				applyGravity = state;
@@ -44,6 +45,8 @@ namespace NCL {
 			Vector3 gravity;
 			float	dTOffset;
 			float	globalDamping;
+
+			QuadTree<GameObject*> quadTree;
 
 			std::set<CollisionDetection::CollisionInfo> allCollisions;
 			std::set<CollisionDetection::CollisionInfo> broadphaseCollisions;

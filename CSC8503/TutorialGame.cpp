@@ -280,6 +280,7 @@ void TutorialGame::InitWorld(InitMode mode) {
 	InitDefaultFloor();
 
 	selectionObject = nullptr;
+	physics->UpdateStaticTree();
 }
 
 /*
@@ -357,6 +358,9 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 		cube->GetRenderObject()->SetColour(Vector4(0.8f, 0.8f, 1, 1));
 	} else {
 		cube->GetPhysicsObject()->InitCubeInertia();
+	}
+	if (inverseMass == 0) {
+		cube->GetRenderObject()->SetColour(Vector4(1, 0.8f, 0.8f, 1));
 	}
 
 	world->AddGameObject(cube);
@@ -497,11 +501,12 @@ void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing
 		for (int z = 0; z < numRows; ++z) {
 			Vector3 position = offset + Vector3(x * colSpacing, 10.0f, z * rowSpacing);
 
-			switch (rand() % 4) {
+			switch (rand() % 5) {
 				case 0: AddCubeToWorld(position, cubeDims, 10.0f, true); break;
 				case 1: AddCubeToWorld(position, cubeDims, 10.0f, false); break;
 				case 2: AddSphereToWorld(position, sphereRadius); break;
 				case 3: AddCapsuleToWorld(position, capsuleHeight, capsuleRadius); break;
+				case 4: AddCubeToWorld(position, cubeDims, 0.0f, true); break;
 			}
 		}
 	}
