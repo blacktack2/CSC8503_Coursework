@@ -13,19 +13,20 @@ https://research.ncl.ac.uk/game/
 using namespace NCL;
 using namespace Maths;
 
-Vector4::Vector4(const Vector3& v3, float newW) : x(v3.x), y(v3.y), z(v3.z), w (newW)  {
-
-}
-
 Vector4::Vector4(const Vector2& v2, float newZ, float newW) : x(v2.x), y(v2.y), z(newZ), w(newW) {
-
 }
 
-constexpr Vector4 Vector4::Clamp(const Vector4& input, const Vector4& mins, const Vector4& maxs) {
-	return Vector4(
-		std::clamp(input.x, mins.x, maxs.x),
-		std::clamp(input.y, mins.y, maxs.y),
-		std::clamp(input.z, mins.z, maxs.z),
-		std::clamp(input.w, mins.w, maxs.w)
-	);
+NCL::Maths::Vector4::Vector4(float newX, const Vector2& v2, float newW) : x(newX), y(v2.x), z(v2.y), w(newW) {
+}
+
+NCL::Maths::Vector4::Vector4(float newX, float newY, const Vector2& v2) : x(newX), y(newY), z(v2.x), w(v2.y) {
+}
+
+NCL::Maths::Vector4::Vector4(const Vector2& v2a, const Vector2& v2b) : x(v2a.x), y(v2a.y), z(v2b.x), w(v2b.y) {
+}
+
+Vector4::Vector4(const Vector3& v3, float newW) : x(v3.x), y(v3.y), z(v3.z), w(newW) {
+}
+
+NCL::Maths::Vector4::Vector4(float newX, const Vector3& v3) : x(newX), y(v3.x), z(v3.y), w(v3.z) {
 }

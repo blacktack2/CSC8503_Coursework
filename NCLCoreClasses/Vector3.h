@@ -7,9 +7,9 @@ Comments and queries to: richard-gordon.davison AT ncl.ac.uk
 https://research.ncl.ac.uk/game/
 */
 #pragma once
+#include <algorithm>
 #include <cmath>
 #include <iostream>
-#include <algorithm>
 
 namespace NCL::Maths {
 	class Vector2;
@@ -32,7 +32,7 @@ namespace NCL::Maths {
 
 		constexpr Vector3(float xVal, float yVal, float zVal) : x(xVal), y(yVal), z(zVal) {}
 
-		Vector3(const Vector2& v2, float z = 0.0f);
+		Vector3(const Vector2& v2, float z);
 		Vector3(const Vector4& v4);
 
 		~Vector3(void) = default;
@@ -43,7 +43,7 @@ namespace NCL::Maths {
 			return temp;
 		}
 
-		void			Normalise() {
+		void Normalise() {
 			float length = Length();
 
 			if (length != 0.0f) {
@@ -54,71 +54,79 @@ namespace NCL::Maths {
 			}
 		}
 
-		float	Length() const {
-			return sqrt((x*x) + (y*y) + (z*z));
+		inline float Length() const {
+			return std::sqrt((x*x) + (y*y) + (z*z));
 		}
 
-		constexpr float	LengthSquared() const {
+		inline constexpr float LengthSquared() const {
 			return ((x*x) + (y*y) + (z*z));
 		}
 
-		constexpr float		GetMaxElement() const {
-			float v = x;
-			if (y > v) {
-				v = y;
-			}
-			if (z > v) {
-				v = z;
-			}
-			return v;
+		inline constexpr float GetMaxElement() const {
+			return std::max(std::max(x, y), z);
 		}
 
-		float		GetAbsMaxElement() const {
-			float v = abs(x);
-			if (abs(y) > v) {
-				v = abs(y);
-			}
-			if (abs(z) > v) {
-				v = abs(z);
-			}
-			return v;
+		inline constexpr float GetMinElement() const {
+			return std::min(std::min(x, y), z);
 		}
 
-		static constexpr Vector3 Clamp(const Vector3& input, const Vector3& mins, const Vector3& maxs);
-
-		static constexpr float	Dot(const Vector3 &a, const Vector3 &b) {
-			return (a.x*b.x) + (a.y*b.y) + (a.z*b.z);
+		inline constexpr float GetAbsMaxElement() const {
+			return std::max(std::max(std::abs(x), std::abs(y)), std::abs(z));
 		}
 
-		static Vector3	Cross(const Vector3 &a, const Vector3 &b) {
-			return Vector3((a.y*b.z) - (a.z*b.y), (a.z*b.x) - (a.x*b.z), (a.x*b.y) - (a.y*b.x));
+		inline constexpr float GetAbsMinElement() const {
+			return std::min(std::min(std::abs(x), std::abs(y)), std::abs(z));
 		}
 
-		inline Vector3  operator+(const Vector3  &a) const {
+		static inline constexpr Vector3 Clamp(const Vector3& input, const Vector3& mins, const Vector3& maxs) {
+			return Vector3(
+				std::clamp(input.x, mins.x, maxs.x),
+				std::clamp(input.y, mins.y, maxs.y),
+				std::clamp(input.z, mins.z, maxs.z)
+			);
+		}
+
+		static inline constexpr Vector3 Abs(const Vector3& input) {
+			return Vector3(
+				std::abs(input.x),
+				std::abs(input.y),
+				std::abs(input.z)
+			);
+		}
+
+		static inline constexpr float Dot(const Vector3 &a, const Vector3 &b) {
+			return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
+		}
+
+		static inline constexpr Vector3 Cross(const Vector3 &a, const Vector3 &b) {
+			return Vector3((a.y * b.z) - (a.z * b.y), (a.z * b.x) - (a.x * b.z), (a.x * b.y) - (a.y * b.x));
+		}
+
+		inline constexpr Vector3 operator+(const Vector3  &a) const {
 			return Vector3(x + a.x, y + a.y, z + a.z);
 		}
 
-		inline Vector3  operator-(const Vector3  &a) const {
+		inline constexpr Vector3 operator-(const Vector3  &a) const {
 			return Vector3(x - a.x, y - a.y, z - a.z);
 		}
 
-		inline Vector3  operator-() const {
+		inline constexpr Vector3 operator-() const {
 			return Vector3(-x, -y, -z);
 		}
 
-		inline Vector3  operator*(float a)	const {
+		inline constexpr Vector3 operator*(float a)	const {
 			return Vector3(x * a, y * a, z * a);
 		}
 
-		inline Vector3  operator*(const Vector3  &a) const {
+		inline constexpr Vector3 operator*(const Vector3  &a) const {
 			return Vector3(x * a.x, y * a.y, z * a.z);
 		}
 
-		inline Vector3  operator/(const Vector3  &a) const {
+		inline constexpr Vector3 operator/(const Vector3  &a) const {
 			return Vector3(x / a.x, y / a.y, z / a.z);
 		};
 
-		inline Vector3  operator/(float v) const {
+		inline constexpr Vector3 operator/(float v) const {
 			return Vector3(x / v, y / v, z / v);
 		};
 
@@ -128,50 +136,55 @@ namespace NCL::Maths {
 			z += a.z;
 		}
 
-		inline void operator-=(const Vector3  &a) {
+		inline constexpr void operator-=(const Vector3  &a) {
 			x -= a.x;
 			y -= a.y;
 			z -= a.z;
 		}
 
 
-		inline void operator*=(const Vector3  &a) {
+		inline constexpr void operator*=(const Vector3  &a) {
 			x *= a.x;
 			y *= a.y;
 			z *= a.z;
 		}
 
-		inline void operator/=(const Vector3  &a) {
+		inline constexpr void operator/=(const Vector3  &a) {
 			x /= a.x;
 			y /= a.y;
 			z /= a.z;
 		}
 
-		inline void operator*=(float f) {
+		inline constexpr void operator*=(float f) {
 			x *= f;
 			y *= f;
 			z *= f;
 		}
 
-		inline void operator/=(float f) {
+		inline constexpr void operator/=(float f) {
 			x /= f;
 			y /= f;
 			z /= f;
 		}
 
-		inline float operator[](int i) const {
+		inline constexpr float operator[](int i) const {
 			return array[i];
 		}
 
-		inline float& operator[](int i) {
+		inline constexpr float& operator[](int i) {
 			return array[i];
 		}
 
-		inline bool	operator==(const Vector3 &A)const { return (A.x == x && A.y == y && A.z == z) ? true : false; };
-		inline bool	operator!=(const Vector3 &A)const { return (A.x == x && A.y == y && A.z == z) ? false : true; };
+		inline constexpr bool operator==(const Vector3 &A)const {
+			return (A.x == x && A.y == y && A.z == z);
+		};
+
+		inline constexpr bool operator!=(const Vector3 &A)const {
+			return !(A.x == x && A.y == y && A.z == z);
+		};
 
 		inline friend std::ostream& operator<<(std::ostream& o, const Vector3& v) {
-			o << "Vector3(" << v.x << "," << v.y << "," << v.z << ")" << std::endl;
+			o << "Vector3(" << v.x << "," << v.y << "," << v.z << ")\n";
 			return o;
 		}
 	};
