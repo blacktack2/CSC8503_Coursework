@@ -435,9 +435,6 @@ bool NCL::CollisionDetection::AABBCapsuleIntersection(const AABBVolume& volumeA,
 	Vector3 boxPos = worldTransformA.GetPosition();
 	Vector3 boxSize = volumeA.GetHalfDimensions();
 
-	Vector3 boxMin = boxPos - boxSize;
-	Vector3 boxMax = boxPos + boxSize;
-
 	Vector3 capsulePos = worldTransformB.GetPosition();
 	Vector3 capsuleDir = worldTransformB.GetOrientation() * Vector3(0, 1, 0);
 	float capsuleRadius = volumeB.GetRadius() * 0.5f;
@@ -500,7 +497,43 @@ bool  CollisionDetection::OBBSphereIntersection(const OBBVolume& volumeA, const 
 
 bool NCL::CollisionDetection::OBBCapsuleIntersection(const OBBVolume& volumeA, const Transform& worldTransformA,
 	const CapsuleVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo) {
-	return false;
+	Vector3 boxPos = worldTransformA.GetPosition();
+	Vector3 boxSize = volumeA.GetHalfDimensions();
+	Quaternion boxOrientation = worldTransformA.GetOrientation();
+	Quaternion boxOrientationInv = boxOrientation.Conjugate();
+
+	Vector3 capsulePos = boxOrientationInv * (worldTransformB.GetPosition() - boxPos);
+	Vector3 capsuleDir = boxOrientationInv * worldTransformB.GetOrientation() * Vector3(0, 1, 0);
+	float capsuleRadius = volumeB.GetRadius() * 0.5f;
+	float capsuleHalfHeight = volumeB.GetHalfHeight();
+
+	float capsuleOffset = capsuleHalfHeight - capsuleRadius;
+	Vector3 capsuleHead = capsulePos + capsuleDir * capsuleOffset;
+	Vector3 capsuleTail = capsulePos - capsuleDir * capsuleOffset;
+
+	Vector3 closestPointToHead = Maths::Clamp(capsuleHead, -boxSize, boxSize);
+	Vector3 localPointHead = capsuleHead - closestPointToHead;
+	float headDistanceSquared = localPointHead.LengthSquared();
+
+	Vector3 closestPointToTail = Maths::Clamp(capsuleTail, -boxSize, boxSize);
+	Vector3 localPointTail = capsuleTail - closestPointToTail;
+	float tailDistanceSquared = localPointTail.LengthSquared();
+
+	Vector3 boxPoint = headDistanceSquared < tailDistanceSquared ? closestPointToHead : closestPointToTail;
+
+	float proj = std::clamp(Vector3::Dot(boxPoint - capsulePos, capsuleDir), -capsuleOffset, capsuleOffset);
+	Vector3 capsulePoint = capsulePos + capsuleDir * proj;
+
+	float distanceSquared = (capsulePoint - boxPoint).LengthSquared();
+	if (distanceSquared > capsuleRadius * capsuleRadius) {
+		return false;
+	}
+
+	float penetration = capsuleRadius - std::sqrt(distanceSquared);
+	Vector3 normal = (capsulePoint - boxPoint).Normalised();
+
+	collisionInfo.AddContactPoint(boxPos + boxOrientation * boxPoint, boxOrientation * normal, penetration);
+	return true;
 }
 
 bool NCL::CollisionDetection::SphereCapsuleIntersection(const SphereVolume& volumeA, const Transform& worldTransformA,
