@@ -79,6 +79,7 @@ namespace NCL {
 
 		static bool ObjectIntersection(GameObject* a, GameObject* b, CollisionInfo& collisionInfo);
 
+		static bool AASquareTest(const Vector2& posA, const Vector2& posB, const Vector2& halfSizeA, const Vector2& halfSizeB);
 		static bool	AABBTest(const Vector3& posA, const Vector3& posB, const Vector3& halfSizeA, const Vector3& halfSizeB);
 
 		static bool AABBIntersection(	const AABBVolume& volumeA, const Transform& worldTransformA,

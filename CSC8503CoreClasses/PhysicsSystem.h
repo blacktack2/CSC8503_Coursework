@@ -1,5 +1,6 @@
 #pragma once
 #include "GameWorld.h"
+#include "QuadTree.h"
 
 namespace NCL {
 	namespace CSC8503 {
@@ -46,12 +47,12 @@ namespace NCL {
 			float	dTOffset;
 			float	globalDamping;
 
-			QuadTree<GameObject*> quadTree;
+			QuadTree<GameObject*> dynamicQuadTree;
+			QuadTree<GameObject*> staticQuadTree;
 
 			std::set<CollisionDetection::CollisionInfo> allCollisions;
 			std::set<CollisionDetection::CollisionInfo> broadphaseCollisions;
 			std::vector<CollisionDetection::CollisionInfo> broadphaseCollisionsVec;
-			bool useBroadPhase		= true;
 			int numCollisionFrames	= 5;
 		};
 	}

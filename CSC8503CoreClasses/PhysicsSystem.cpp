@@ -1,18 +1,18 @@
 #include "PhysicsSystem.h"
-#include "PhysicsObject.h"
-#include "GameObject.h"
+
 #include "CollisionDetection.h"
-#include "Quaternion.h"
-
 #include "Constraint.h"
-
 #include "Debug.h"
+#include "GameObject.h"
+#include "PhysicsObject.h"
+#include "Quaternion.h"
 #include "Window.h"
+
 #include <functional>
 using namespace NCL;
 using namespace CSC8503;
 
-PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g), quadTree(Vector2(1024, 1024), 7, 6) {
+PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g), staticQuadTree(Vector2(1024, 1024), 7, 6), dynamicQuadTree(Vector2(1024, 1024), 7, 6) {
 	applyGravity	= false;
 	dTOffset		= 0.0f;
 	globalDamping	= 0.995f;
@@ -64,10 +64,6 @@ int realHZ		= idealHZ;
 float realDT	= idealDT;
 
 void PhysicsSystem::Update(float dt) {	
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::B)) {
-		useBroadPhase = !useBroadPhase;
-		std::cout << "Setting broadphase to " << useBroadPhase << std::endl;
-	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::N)) {
 		useSimpleContainer = !useSimpleContainer;
 		std::cout << "Setting broad container to " << useSimpleContainer << std::endl;
@@ -86,19 +82,13 @@ void PhysicsSystem::Update(float dt) {
 	GameTimer t;
 	t.GetTimeDeltaSeconds();
 
-	if (useBroadPhase) {
-		UpdateObjectAABBs();
-	}
+	UpdateObjectAABBs();
 	int iteratorCount = 0;
 	while(dTOffset > realDT) {
 		IntegrateAccel(realDT); //Update accelerations from external forces
-		if (useBroadPhase) {
-			BroadPhase();
-			NarrowPhase();
-		}
-		else {
-			BasicCollisionDetection();
-		}
+
+		BroadPhase();
+		NarrowPhase();
 
 		//This is our simple iterative solver - 
 		//we just run things multiple times, slowly moving things forward
@@ -142,19 +132,20 @@ void PhysicsSystem::Update(float dt) {
 }
 
 void NCL::CSC8503::PhysicsSystem::UpdateStaticTree() {
-	quadTree.FullClear();
+	staticQuadTree.Clear();
+	UpdateObjectAABBs();
 
 	std::vector<GameObject*>::const_iterator first;
 	std::vector<GameObject*>::const_iterator last;
 	gameWorld.GetObjectIterators(first, last);
 	for (auto i = first; i != last; i++) {
-		if ((*i)->GetPhysicsObject()->GetInverseMass()) {
+		if ((*i)->GetPhysicsObject()->GetInverseMass() == 0) {
 			Vector3 halfSizes;
 			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
 				continue;
 			}
 			Vector3 pos = (*i)->GetTransform().GetPosition();
-			quadTree.Insert(*i, pos, halfSizes, false);
+			staticQuadTree.Insert(*i, Vector2(pos.x, pos.z), Vector2(halfSizes.x, halfSizes.z));
 		}
 	}
 }
@@ -294,22 +285,24 @@ compare the collisions that we absolutely need to.
 */
 void PhysicsSystem::BroadPhase() {
 	broadphaseCollisions.clear();
-	quadTree.Clear();
+	dynamicQuadTree.Clear();
 
 	std::vector<GameObject*>::const_iterator first;
 	std::vector<GameObject*>::const_iterator last;
 	gameWorld.GetObjectIterators(first, last);
 	for (auto i = first; i != last; i++) {
-		Vector3 halfSizes;
-		if (!(*i)->GetBroadphaseAABB(halfSizes)) {
-			continue;
+		if ((*i)->GetPhysicsObject()->GetInverseMass() != 0) {
+			Vector3 halfSizes;
+			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
+				continue;
+			}
+			Vector3 pos = (*i)->GetTransform().GetPosition();
+			dynamicQuadTree.Insert(*i, Vector2(pos.x, pos.z), Vector2(halfSizes.x, halfSizes.z));
 		}
-		Vector3 pos = (*i)->GetTransform().GetPosition();
-		quadTree.Insert(*i, pos, halfSizes, true);
 	}
 
-	quadTree.OperateOnContents(
-		[&](std::list<QuadTreeEntry<GameObject*>>& data) {
+	dynamicQuadTree.OperateOnContents(
+		[&](std::list<QuadTreeEntry<GameObject*>>& data, const Vector2& subsetPos, const Vector2& subsetSize) {
 			CollisionDetection::CollisionInfo info{};
 			for (auto i = data.begin(); i != data.end(); i++) {
 				for (auto j = std::next(i); j != data.end(); j++) {
@@ -318,10 +311,24 @@ void PhysicsSystem::BroadPhase() {
 					broadphaseCollisions.insert(info);
 				}
 			}
+			staticQuadTree.OperateOnContents(
+				[&](std::list<QuadTreeEntry<GameObject*>>& staticData, const Vector2& staticPos, const Vector2& staticSize) {
+					int counter = 0;
+					CollisionDetection::CollisionInfo info{};
+					for (auto i = data.begin(); i != data.end(); i++) {
+						for (auto j = staticData.begin(); j != staticData.end(); j++) {
+							info.a = std::min((*i).object, (*j).object);
+							info.b = std::max((*i).object, (*j).object);
+							broadphaseCollisions.insert(info);
+						}
+					}
+				}, subsetPos, subsetSize
+			);
 		}
 	);
 
-	//tree.DebugDraw();
+	//dynamicQuadTree.DebugDraw();
+	//staticQuadTree.DebugDraw();
 }
 
 /*

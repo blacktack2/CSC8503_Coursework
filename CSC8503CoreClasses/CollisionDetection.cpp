@@ -289,16 +289,18 @@ bool CollisionDetection::ObjectIntersection(GameObject* a, GameObject* b, Collis
 	return false;
 }
 
+bool NCL::CollisionDetection::AASquareTest(const Vector2& posA, const Vector2& posB, const Vector2& halfSizeA, const Vector2& halfSizeB) {
+	Vector2 delta = posB - posA;
+	Vector2 totalSize = halfSizeA + halfSizeB;
+
+	return (std::abs(delta.x) < totalSize.x && std::abs(delta.y) < totalSize.y);
+}
+
 bool CollisionDetection::AABBTest(const Vector3& posA, const Vector3& posB, const Vector3& halfSizeA, const Vector3& halfSizeB) {
 	Vector3 delta = posB - posA;
 	Vector3 totalSize = halfSizeA + halfSizeB;
 
-	if (abs(delta.x) < totalSize.x &&
-		abs(delta.y) < totalSize.y &&
-		abs(delta.z) < totalSize.z) {
-		return true;
-	}
-	return false;
+	return (std::abs(delta.x) < totalSize.x && std::abs(delta.y) < totalSize.y && std::abs(delta.z) < totalSize.z);
 }
 
 bool CollisionDetection::AABBIntersection(const AABBVolume& volumeA, const Transform& worldTransformA,

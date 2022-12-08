@@ -1,202 +1,91 @@
 #pragma once
-#include "Vector2.h"
-#include "CollisionDetection.h"
-#include "Debug.h"
 
 namespace NCL {
-	using namespace NCL::Maths;
+	using namespace Maths;
 	namespace CSC8503 {
 		template<class T>
 		class QuadTree;
 
 		template<class T>
+		class NodeStack;
+
+		template<class T>
 		struct QuadTreeEntry {
-			Vector3 pos;
-			Vector3 size;
+			Vector2 pos;
+			Vector2 size;
 			T object;
 
-			QuadTreeEntry(T obj, Vector3 pos, Vector3 size) {
-				object		= obj;
-				this->pos	= pos;
-				this->size	= size;
+			QuadTreeEntry(T obj, Vector2 pos, Vector2 size) {
+				object = obj;
+				this->pos = pos;
+				this->size = size;
 			}
 		};
 
 		template<class T>
-		class QuadTreeNode	{
+		class QuadTreeNode {
 		public:
-			typedef std::function<void(std::list<QuadTreeEntry<T>>&)> QuadTreeFunc;
-		protected:
+			typedef std::function<void(std::list<QuadTreeEntry<T>>&, const Vector2& nodePos, const Vector2& nodeSize)> QuadTreeFunc;
 			friend class QuadTree<T>;
 
-			QuadTreeNode() {}
+			QuadTreeNode(NodeStack<T>& nodeStack);
+			~QuadTreeNode();
 
-			QuadTreeNode(Vector2 pos, Vector2 size) {
-				children		= nullptr;
-				this->position	= pos;
-				this->size		= size;
-			}
+			void Init(Vector2 pos, Vector2 size);
+			void Insert(T& object, const Vector2& objectPos, const Vector2& objectSize, int depthLeft, int maxSize);
 
-			~QuadTreeNode() {
-				delete[] children;
-			}
+			void OperateOnContents(QuadTreeFunc& func);
+			void OperateOnContents(QuadTreeFunc& func, const Vector2& subsetPos, const Vector2& subsetSize);
 
-			void Insert(T& object, const Vector3& objectPos, const Vector3& objectSize, int depthLeft, int maxSize, bool isDynamic) {
-				if (!CollisionDetection::AABBTest(objectPos, Vector3(position.x, 0, position.y), objectSize, Vector3(size.x, 1000.0f, size.y))) {
-					return;
-				}
-				if (children) {
-					for (int i = 0; i < 4; i++) {
-						children[i].Insert(object, objectPos, objectSize, depthLeft - 1, maxSize, isDynamic);
-					}
-				} else {
-					if (isDynamic) {
-						dynamicContents.push_back(QuadTreeEntry<T>(object, objectPos, objectSize));
-					} else {
-						staticContents.push_back(QuadTreeEntry<T>(object, objectPos, objectSize));
-					}
-					if ((int)(dynamicContents.size() + staticContents.size()) > maxSize && depthLeft > 0 && !children) {
-						Split();
-						for (const auto& i : dynamicContents) {
-							for (int j = 0; j < 4; j++) {
-								auto entry = i;
-								children[j].Insert(entry.object, entry.pos, entry.size, depthLeft - 1, maxSize, true);
-							}
-						}
-						dynamicContents.clear();
-						for (const auto& i : staticContents) {
-							for (int j = 0; j < 4; j++) {
-								auto entry = i;
-								children[j].Insert(entry.object, entry.pos, entry.size, depthLeft - 1, maxSize, false);
-							}
-						}
-						staticContents.clear();
-					}
-				}
-			}
+			void Split();
+			void Clear();
+			void PushToStack();
 
-			std::list<QuadTreeEntry<T>>* Clear(int maxSize) {
-				if (children) {
-					bool removeChildren = true;
-					std::vector<std::list<QuadTreeEntry<T>>*> childStatics{};
-					for (int i = 0; i < 4; i++) {
-						childStatics.push_back(children[i].Clear(maxSize));
-						removeChildren &= childStatics.back() == nullptr;
-					}
-					if (removeChildren) {
-						for (auto& statics : childStatics) {
-							if (statics == nullptr) {
-								continue;
-							}
-							for (auto& i : *statics) {
-								auto entry = i;
-								staticContents.push_back(i);
-							}
-						}
-
-						delete[] children;
-						children = nullptr;
-					}
-				} else {
-					dynamicContents.clear();
-				}
-				if (staticContents.size() > maxSize) {
-					return &staticContents;
-				} else {
-					return nullptr;
-				}
-			}
-
-			void FullClear() {
-				delete[] children;
-				children = nullptr;
-
-				dynamicContents.clear();
-				staticContents.clear();
-			}
-
-			void Split() {
-				Vector2 halfSize = size * 0.5f;
-				children = new QuadTreeNode<T>[4]{
-					QuadTreeNode<T>(position + Vector2(-1,  1) * halfSize, halfSize),
-					QuadTreeNode<T>(position + Vector2( 1,  1) * halfSize, halfSize),
-					QuadTreeNode<T>(position + Vector2(-1, -1) * halfSize, halfSize),
-					QuadTreeNode<T>(position + Vector2( 1, -1) * halfSize, halfSize),
-				};
-			}
-
-			void DebugDraw() {
-				if (children) {
-					for (int i = 0; i < 4; i++) {
-						children[i].DebugDraw();
-					}
-				} else {
-					Debug::DrawLine(Vector3(position.x, -1000, position.y), Vector3(position.x, 1000, position.y), Vector4());
-				}
-			}
-
-			void OperateOnContents(QuadTreeFunc& func) {
-				if (children) {
-					for (int i = 0; i < 4; i++) {
-						children[i].OperateOnContents(func);
-					}
-				} else if (!dynamicContents.empty()) {
-					func(dynamicContents);
-				}
-			}
-
+			void DebugDraw();
 		protected:
-			std::list<QuadTreeEntry<T>> dynamicContents;
-			std::list<QuadTreeEntry<T>> staticContents;
+			NodeStack<T>& nodeStack;
+
+			std::list<QuadTreeEntry<T>> contents{};
 
 			Vector2 position;
 			Vector2 size;
 
-			QuadTreeNode<T>* children;
+			QuadTreeNode<T>* children[4]{ nullptr, nullptr, nullptr, nullptr };
+			bool isSplit;
 		};
-	}
-}
 
-
-namespace NCL {
-	using namespace NCL::Maths;
-	namespace CSC8503 {
 		template<class T>
-		class QuadTree
-		{
+		class NodeStack {
 		public:
-			QuadTree(Vector2 size, int maxDepth = 6, int maxSize = 5){
-				root = QuadTreeNode<T>(Vector2(), size);
-				this->maxDepth	= maxDepth;
-				this->maxSize	= maxSize;
-			}
-			~QuadTree() {
-			}
+			explicit NodeStack(int maxNodes);
 
-			void Insert(T object, const Vector3& pos, const Vector3& size, bool isStatic) {
-				root.Insert(object, pos, size, maxDepth, maxSize, isStatic);
-			}
+			void Push(QuadTreeNode<T>* node);
+			QuadTreeNode<T>* Pop();
+		private:
+			std::vector<QuadTreeNode<T>> nodes;
+			std::stack<QuadTreeNode<T>*> stack;
+		};
 
-			void Clear() {
-				root.Clear(maxSize);
-			}
+		template<class T>
+		class QuadTree {
+		public:
+			QuadTree(Vector2 size, int maxDepth = 6, int maxSize = 5);
+			~QuadTree() = default;
 
-			void FullClear() {
-				root.FullClear();
-			}
+			void Insert(T object, const Vector2& pos, const Vector2& size);
+			void OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc func);
+			void OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc func, const Vector2& subsetPos, const Vector2& subsetSize);
 
-			void DebugDraw() {
-				root.DebugDraw();
-			}
+			void Clear();
 
-			void OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc  func) {
-				root.OperateOnContents(func);
-			}
-
+			void DebugDraw();
 		protected:
 			QuadTreeNode<T> root;
+			NodeStack<T> nodeStack;
 			int maxDepth;
 			int maxSize;
 		};
 	}
 }
+
+#include "QuadTree.cpp"

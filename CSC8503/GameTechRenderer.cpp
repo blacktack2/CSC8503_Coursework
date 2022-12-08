@@ -2,6 +2,7 @@
 #include "GameObject.h"
 #include "RenderObject.h"
 #include "Camera.h"
+#include "Debug.h"
 #include "TextureLoader.h"
 using namespace NCL;
 using namespace Rendering;

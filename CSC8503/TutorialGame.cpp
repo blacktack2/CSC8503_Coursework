@@ -1,3 +1,4 @@
+#include "Debug.h"
 #include "TutorialGame.h"
 #include "GameWorld.h"
 #include "PhysicsObject.h"
@@ -217,7 +218,7 @@ void TutorialGame::LockedObjectMovement() {
 
 void TutorialGame::DebugObjectMovement() {
 //If we've selected an object, we can manipulate it with some key presses
-	if (inSelectionMode && selectionObject) {
+	if (selectionObject) {
 		//Twist the selected object!
 		if (Window::GetKeyboard()->KeyDown(KeyboardKeys::LEFT)) {
 			selectionObject->GetPhysicsObject()->AddTorque(Vector3(-10, 0, 0));
@@ -279,8 +280,9 @@ void TutorialGame::InitWorld(InitMode mode) {
 	InitGameExamples();
 	InitDefaultFloor();
 
-	selectionObject = nullptr;
 	physics->UpdateStaticTree();
+
+	selectionObject = nullptr;
 }
 
 /*
