@@ -14,6 +14,8 @@ namespace NCL::CSC8503 {
 		GameObject(std::string name = "");
 		~GameObject();
 
+		virtual void Update(float dt) {}
+
 		void SetBoundingVolume(CollisionVolume* vol) {
 			boundingVolume = vol;
 		}

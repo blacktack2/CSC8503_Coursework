@@ -1,15 +1,13 @@
 #include "Debug.h"
-#include "TutorialGame.h"
 #include "GameWorld.h"
-#include "PhysicsObject.h"
-#include "RenderObject.h"
-#include "TextureLoader.h"
-
-#include "PositionConstraint.h"
 #include "OrientationConstraint.h"
+#include "PhysicsObject.h"
+#include "PlayerObject.h"
+#include "PositionConstraint.h"
+#include "RenderObject.h"
 #include "StateGameObject.h"
-
-
+#include "TextureLoader.h"
+#include "TutorialGame.h"
 
 using namespace NCL;
 using namespace CSC8503;
@@ -161,10 +159,6 @@ void TutorialGame::UpdateKeys() {
 		InitCamera(); //F2 will reset the camera to a specific default place
 	}
 
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::G)) {
-		useGravity = !useGravity; //Toggle gravity!
-		physics->UseGravity(useGravity);
-	}
 	//Running certain physics updates in a consistent order might cause some
 	//bias in the calculations - the same objects might keep 'winning' the constraint
 	//allowing the other one to stretch too much etc. Shuffling the order so that it
@@ -408,31 +402,33 @@ StateGameObject* NCL::CSC8503::TutorialGame::AddStateObjectToWorld(const Vector3
 	sgo->GetPhysicsObject()->InitSphereInertia();
 
 	world->AddGameObject(sgo);
-	world->AddStateMachine(sgo->GetStateMachine());
 
 	return sgo;
 }
 
-GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position) {
-	float meshSize		= 1.0f;
-	float inverseMass	= 0.5f;
+GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, bool cameraFollow) {
+	static int id = 0;
 
-	GameObject* character = new GameObject();
-	SphereVolume* volume  = new SphereVolume(1.0f);
+	PlayerObject* character = new PlayerObject(id++);
+	SphereVolume* volume = new SphereVolume(1.0f);
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
 
 	character->GetTransform()
-		.SetScale(Vector3(meshSize, meshSize, meshSize))
+		.SetScale(Vector3(1, 1, 1))
 		.SetPosition(position);
 
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
-	character->GetPhysicsObject()->SetInverseMass(inverseMass);
-	character->GetPhysicsObject()->InitSphereInertia();
+	character->GetPhysicsObject()->SetInverseMass(1);
+	character->GetPhysicsObject()->InitCapsuleInertia();
 
 	world->AddGameObject(character);
+
+	if (cameraFollow) {
+		world->GetMainCamera()->SetFollow(&character->GetTransform());
+	}
 
 	return character;
 }
@@ -482,14 +478,13 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 }
 
 void TutorialGame::InitDefaultFloor() {
-	AddFloorToWorld(Vector3(0, -20, 0));
+	AddFloorToWorld(Vector3(0, 0, 0));
 }
 
 void TutorialGame::InitGameExamples() {
 	AddPlayerToWorld(Vector3(0, 5, 0));
 	AddEnemyToWorld(Vector3(5, 5, 0));
 	AddBonusToWorld(Vector3(10, 5, 0));
-	AddStateObjectToWorld(Vector3(400, 20, 0));
 }
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {

@@ -14,10 +14,6 @@ namespace NCL {
 			void Update(float dt);
 			void UpdateStaticTree();
 
-			void UseGravity(bool state) {
-				applyGravity = state;
-			}
-
 			void SetGlobalDamping(float d) {
 				globalDamping = d;
 			}
@@ -42,7 +38,6 @@ namespace NCL {
 
 			GameWorld& gameWorld;
 
-			bool	applyGravity;
 			Vector3 gravity;
 			float	dTOffset;
 			float	globalDamping;
@@ -53,6 +48,7 @@ namespace NCL {
 			std::set<CollisionDetection::CollisionInfo> allCollisions;
 			std::set<CollisionDetection::CollisionInfo> broadphaseCollisions;
 			std::vector<CollisionDetection::CollisionInfo> broadphaseCollisionsVec;
+			bool useBroadPhase		= true;
 			int numCollisionFrames	= 5;
 		};
 	}

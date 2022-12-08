@@ -8,10 +8,13 @@ https://research.ncl.ac.uk/game/
 */
 #pragma once
 #include "Matrix4.h"
+#include "../CSC8503CoreClasses/Transform.h"
 #include "Vector3.h"
 
 namespace NCL {
-	using namespace NCL::Maths;
+	using namespace Maths;
+	using namespace CSC8503;
+
 	enum class CameraType {
 		Orthographic,
 		Perspective
@@ -19,35 +22,13 @@ namespace NCL {
 
 	class Camera {
 	public:
-		Camera(void) {
-			left	= 0;
-			right	= 0;
-			top		= 0;
-			bottom	= 0;
+		Camera(void);
 
-			pitch		= 0.0f;
-			yaw			= 0.0f;
-
-			fov			= 45.0f;
-			nearPlane	= 1.0f;
-			farPlane	= 100.0f;
-
-			camType		= CameraType::Perspective;
-		};
-
-		Camera(float pitch, float yaw, const Vector3& position) : Camera() {
-			this->pitch		= pitch;
-			this->yaw		= yaw;
-			this->position	= position;
-
-			this->fov		= 45.0f;
-			this->nearPlane = 1.0f;
-			this->farPlane	= 100.0f;
-
-			this->camType	= CameraType::Perspective;
-		}
+		Camera(float pitch, float yaw, const Vector3& position);
 
 		~Camera(void) = default;
+
+		void SetFollow(Transform* transform);
 
 		void UpdateCamera(float dt);
 
@@ -110,5 +91,11 @@ namespace NCL {
 		float	yaw;
 		float	pitch;
 		Vector3 position;
+
+		Transform* follow = nullptr;
+		float followDistance;
+		float followLat;
+		float followLon;
+		Vector3 lookat;
 	};
 }

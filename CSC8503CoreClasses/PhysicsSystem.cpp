@@ -13,7 +13,6 @@ using namespace NCL;
 using namespace CSC8503;
 
 PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g), staticQuadTree(Vector2(1024, 1024), 7, 6), dynamicQuadTree(Vector2(1024, 1024), 7, 6) {
-	applyGravity	= false;
 	dTOffset		= 0.0f;
 	globalDamping	= 0.995f;
 	SetGravity(Vector3(0.0f, -9.8f, 0.0f));
@@ -372,7 +371,7 @@ void PhysicsSystem::IntegrateAccel(float dt) {
 		Vector3 force     = object->GetForce();
 		Vector3 accel     = force * inverseMass;
 
-		if (applyGravity && inverseMass > 0) {
+		if (inverseMass > 0) {
 			accel += gravity;
 		}
 

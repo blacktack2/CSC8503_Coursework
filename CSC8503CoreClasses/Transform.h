@@ -1,10 +1,11 @@
 #pragma once
-
-using std::vector;
-
-using namespace NCL::Maths;
+#include "Matrix4.h"
+#include "Quaternion.h"
+#include "Vector3.h"
 
 namespace NCL {
+	using namespace Maths;
+
 	namespace CSC8503 {
 		class Transform
 		{

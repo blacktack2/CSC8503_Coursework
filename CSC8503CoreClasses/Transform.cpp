@@ -1,6 +1,7 @@
 #include "Transform.h"
 
-using namespace NCL::CSC8503;
+using namespace NCL;
+using namespace CSC8503;
 
 Transform::Transform()	{
 	scale = Vector3(1, 1, 1);
