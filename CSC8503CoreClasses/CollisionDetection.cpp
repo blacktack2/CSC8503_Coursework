@@ -383,7 +383,8 @@ bool CollisionDetection::OBBIntersection(const OBBVolume& volumeA, const Transfo
 			return false;
 		}
 		for (int j = 0; j < 3; j++) {
-			if (SeparatingPlane(delta, Vector3::Cross(axesA[i], axesB[j]), axesA, halfSizeA, axesB, halfSizeB)) {
+			std::pair<Vector3, bool> cross = Vector3::CrossSAT(axesA[i], axesB[j]);
+			if (cross.second && SeparatingPlane(delta, cross.first, axesA, halfSizeA, axesB, halfSizeB)) {
 				return false;
 			}
 		}

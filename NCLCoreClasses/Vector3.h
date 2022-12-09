@@ -94,19 +94,30 @@ namespace NCL::Maths {
 			);
 		}
 
-		static inline constexpr float Dot(const Vector3 &a, const Vector3 &b) {
+		static inline constexpr float Dot(const Vector3& a, const Vector3& b) {
 			return (a.x * b.x) + (a.y * b.y) + (a.z * b.z);
 		}
 
-		static inline constexpr Vector3 Cross(const Vector3 &a, const Vector3 &b) {
+		static inline constexpr Vector3 Cross(const Vector3& a, const Vector3& b) {
 			return Vector3((a.y * b.z) - (a.z * b.y), (a.z * b.x) - (a.x * b.z), (a.x * b.y) - (a.y * b.x));
 		}
 
-		inline constexpr Vector3 operator+(const Vector3  &a) const {
+		static inline constexpr std::pair<Vector3, bool> CrossSAT(const Vector3& a, const Vector3& b) {
+			Vector3 m = Cross(a.Normalised(), b.Normalised());
+			if (m == Vector3(0)) {
+				Vector3 n = Cross(a, b - a);
+				m = Cross(a.Normalised(), n.Normalised());
+				return std::make_pair(m, n != Vector3(0));
+			} else {
+				return std::make_pair(m, true);
+			}
+		}
+
+		inline constexpr Vector3 operator+(const Vector3& a) const {
 			return Vector3(x + a.x, y + a.y, z + a.z);
 		}
 
-		inline constexpr Vector3 operator-(const Vector3  &a) const {
+		inline constexpr Vector3 operator-(const Vector3& a) const {
 			return Vector3(x - a.x, y - a.y, z - a.z);
 		}
 
@@ -118,11 +129,11 @@ namespace NCL::Maths {
 			return Vector3(x * a, y * a, z * a);
 		}
 
-		inline constexpr Vector3 operator*(const Vector3  &a) const {
+		inline constexpr Vector3 operator*(const Vector3& a) const {
 			return Vector3(x * a.x, y * a.y, z * a.z);
 		}
 
-		inline constexpr Vector3 operator/(const Vector3  &a) const {
+		inline constexpr Vector3 operator/(const Vector3& a) const {
 			return Vector3(x / a.x, y / a.y, z / a.z);
 		};
 
@@ -130,26 +141,26 @@ namespace NCL::Maths {
 			return Vector3(x / v, y / v, z / v);
 		};
 
-		inline constexpr void operator+=(const Vector3  &a) {
+		inline constexpr void operator+=(const Vector3& a) {
 			x += a.x;
 			y += a.y;
 			z += a.z;
 		}
 
-		inline constexpr void operator-=(const Vector3  &a) {
+		inline constexpr void operator-=(const Vector3& a) {
 			x -= a.x;
 			y -= a.y;
 			z -= a.z;
 		}
 
 
-		inline constexpr void operator*=(const Vector3  &a) {
+		inline constexpr void operator*=(const Vector3& a) {
 			x *= a.x;
 			y *= a.y;
 			z *= a.z;
 		}
 
-		inline constexpr void operator/=(const Vector3  &a) {
+		inline constexpr void operator/=(const Vector3& a) {
 			x /= a.x;
 			y /= a.y;
 			z /= a.z;
@@ -175,11 +186,11 @@ namespace NCL::Maths {
 			return array[i];
 		}
 
-		inline constexpr bool operator==(const Vector3 &A)const {
+		inline constexpr bool operator==(const Vector3& A)const {
 			return (A.x == x && A.y == y && A.z == z);
 		};
 
-		inline constexpr bool operator!=(const Vector3 &A)const {
+		inline constexpr bool operator!=(const Vector3& A)const {
 			return !(A.x == x && A.y == y && A.z == z);
 		};
 
