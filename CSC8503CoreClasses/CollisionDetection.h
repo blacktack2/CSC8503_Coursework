@@ -84,6 +84,8 @@ namespace NCL {
 		static bool AASquareTest(const Vector2& posA, const Vector2& posB, const Vector2& halfSizeA, const Vector2& halfSizeB);
 		static bool	AABBTest(const Vector3& posA, const Vector3& posB, const Vector3& halfSizeA, const Vector3& halfSizeB);
 
+		static bool SeparatingPlane(const Vector3& delta, const Vector3& plane, const Vector3* axes0, const Vector3& halfSize0, const Vector3* axes1, const Vector3& halfSize1);
+
 		static bool AABBIntersection(	const AABBVolume& volumeA, const Transform& worldTransformA,
 										const AABBVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo);
 		static bool OBBIntersection(	const OBBVolume& volumeA, const Transform& worldTransformA,

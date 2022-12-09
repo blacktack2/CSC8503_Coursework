@@ -351,7 +351,46 @@ bool CollisionDetection::AABBIntersection(const AABBVolume& volumeA, const Trans
 
 bool CollisionDetection::OBBIntersection(const OBBVolume& volumeA, const Transform& worldTransformA,
 	const OBBVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo) {
-	return false;
+
+	Vector3 posA = worldTransformA.GetPosition();
+	Vector3 halfSizeA = volumeA.GetHalfDimensions();
+	Quaternion orientationA = worldTransformA.GetOrientation();
+
+	Matrix3 orientationMatA = Matrix3(orientationA);
+
+	Vector3 posB = worldTransformB.GetPosition();
+	Vector3 halfSizeB = volumeB.GetHalfDimensions();
+	Quaternion orientationB = worldTransformB.GetOrientation();
+
+	Matrix3 orientationMatB = Matrix3(orientationB);
+
+	Vector3 delta = posB - posA;
+
+	Vector3 axesA[] = {
+		orientationMatA.GetColumn(0),
+		orientationMatA.GetColumn(1),
+		orientationMatA.GetColumn(2)
+	};
+	Vector3 axesB[] = {
+		orientationMatB.GetColumn(0),
+		orientationMatB.GetColumn(1),
+		orientationMatB.GetColumn(2)
+	};
+
+	for (int i = 0; i < 3; i++) {
+		if (SeparatingPlane(delta, axesA[i], axesA, halfSizeA, axesB, halfSizeB) ||
+			SeparatingPlane(delta, axesB[i], axesA, halfSizeA, axesB, halfSizeB)) {
+			return false;
+		}
+		for (int j = 0; j < 3; j++) {
+			if (SeparatingPlane(delta, Vector3::Cross(axesA[i], axesB[j]), axesA, halfSizeA, axesB, halfSizeB)) {
+				return false;
+			}
+		}
+	}
+
+	collisionInfo.AddContactPoint(posB, Vector3(0, 1, 0), 0.1f);
+	return true;
 }
 
 bool CollisionDetection::SphereIntersection(const SphereVolume& volumeA, const Transform& worldTransformA,
@@ -406,9 +445,54 @@ bool NCL::CollisionDetection::CapsuleIntersection(const CapsuleVolume& volumeA, 
 	return true;
 }
 
+bool NCL::CollisionDetection::SeparatingPlane(const Vector3& delta, const Vector3& plane, const Vector3* axes0, const Vector3& halfSize0, const Vector3* axes1, const Vector3& halfSize1) {
+	float t = std::abs(Vector3::Dot(delta, plane));
+	float v = 0;
+	for (int i = 0; i < 3; i++) {
+		v += std::abs(Vector3::Dot(axes0[i], plane) * halfSize0[i]);
+		v += std::abs(Vector3::Dot(axes1[i], plane) * halfSize1[i]);
+	}
+	return t > v;
+}
+
 bool NCL::CollisionDetection::AABBOBBIntersection(const AABBVolume& volumeA, const Transform& worldTransformA,
 	const OBBVolume& volumeB, const Transform& worldTransformB, CollisionInfo& collisionInfo) {
-	return false;
+	Vector3 posA = worldTransformA.GetPosition();
+	Vector3 halfSizeA = volumeA.GetHalfDimensions();
+
+	Vector3 posB = worldTransformB.GetPosition();
+	Vector3 halfSizeB = volumeB.GetHalfDimensions();
+	Quaternion orientationB = worldTransformB.GetOrientation();
+
+	Matrix3 orientationMatB = Matrix3(orientationB);
+
+	Vector3 delta = posB - posA;
+
+	Vector3 axesA[] = {
+		Vector3(1, 0, 0),
+		Vector3(0, 1, 0),
+		Vector3(0, 0, 1)
+	};
+	Vector3 axesB[] = {
+		orientationMatB.GetColumn(0),
+		orientationMatB.GetColumn(1),
+		orientationMatB.GetColumn(2)
+	};
+
+	for (int i = 0; i < 3; i++) {
+		if (SeparatingPlane(delta, axesA[i], axesA, halfSizeA, axesB, halfSizeB) ||
+			SeparatingPlane(delta, axesB[i], axesA, halfSizeA, axesB, halfSizeB)) {
+			return false;
+		}
+		for (int j = 0; j < 3; j++) {
+			if (SeparatingPlane(delta, Vector3::Cross(axesA[i], axesB[j]), axesA, halfSizeA, axesB, halfSizeB)) {
+				return false;
+			}
+		}
+	}
+
+	collisionInfo.AddContactPoint(posB, Vector3(0, 1, 0), 0.1f);
+	return true;
 }
 
 bool CollisionDetection::AABBSphereIntersection(const AABBVolume& volumeA, const Transform& worldTransformA,
