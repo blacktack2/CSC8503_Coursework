@@ -61,6 +61,7 @@ namespace NCL {
 			GameObject* AddPlayerToWorld(const Vector3& position, bool cameraFollow = true);
 			GameObject* AddEnemyToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
+			GameObject* AddTriggerToWorld(const Vector3& position, float size);
 
 #ifdef USEVULKAN
 			GameTechVulkanRenderer*	renderer;

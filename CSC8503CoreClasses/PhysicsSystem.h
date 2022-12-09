@@ -44,10 +44,11 @@ namespace NCL {
 
 			QuadTree<GameObject*> dynamicQuadTree;
 			QuadTree<GameObject*> staticQuadTree;
-
+			
+			std::set<CollisionDetection::CollisionInfo> allTriggers;
+			std::set<CollisionDetection::CollisionInfo> broadphaseTriggers;
 			std::set<CollisionDetection::CollisionInfo> allCollisions;
 			std::set<CollisionDetection::CollisionInfo> broadphaseCollisions;
-			std::vector<CollisionDetection::CollisionInfo> broadphaseCollisionsVec;
 			bool useBroadPhase		= true;
 			int numCollisionFrames	= 5;
 		};

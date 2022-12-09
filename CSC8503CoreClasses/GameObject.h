@@ -64,6 +64,14 @@ namespace NCL::CSC8503 {
 			//std::cout << "OnCollisionEnd event occured!\n";
 		}
 
+		virtual void OnTriggerBegin(GameObject* otherObject) {
+			std::cout << "OnTriggerBegin event occured!\n";
+		}
+
+		virtual void OnTriggerEnd(GameObject* otherObject) {
+			std::cout << "OnTriggerEnd event occured!\n";
+		}
+
 		bool GetBroadphaseAABB(Vector3&outsize) const;
 
 		void UpdateBroadphaseAABB();

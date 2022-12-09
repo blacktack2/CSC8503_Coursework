@@ -37,6 +37,10 @@ any collisions they are in.
 */
 void PhysicsSystem::Clear() {
 	allCollisions.clear();
+	allTriggers.clear();
+	dynamicQuadTree.Clear();
+	staticQuadTree.Clear();
+	std::cout << "Clear\n";
 }
 
 /*
@@ -138,7 +142,7 @@ void NCL::CSC8503::PhysicsSystem::UpdateStaticTree() {
 	std::vector<GameObject*>::const_iterator last;
 	gameWorld.GetObjectIterators(first, last);
 	for (auto i = first; i != last; i++) {
-		if ((*i)->GetPhysicsObject()->GetInverseMass() == 0) {
+		if ((*i)->GetPhysicsObject()->IsStatic()) {
 			Vector3 halfSizes;
 			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
 				continue;
@@ -161,21 +165,39 @@ OnCollisionBegin / OnCollisionEnd functions (removing health when hit by a
 rocket launcher, gaining a point when the player hits the gold coin, and so on).
 */
 void PhysicsSystem::UpdateCollisionList() {
-	for (std::set<CollisionDetection::CollisionInfo>::iterator i = allCollisions.begin(); i != allCollisions.end(); ) {
-		if ((*i).framesLeft == numCollisionFrames) {
-			i->a->OnCollisionBegin(i->b);
-			i->b->OnCollisionBegin(i->a);
+	for (auto i = allCollisions.begin(); i != allCollisions.end(); ) {
+		auto& info = const_cast<CollisionDetection::CollisionInfo&>(*i);
+		if (info.isEntered) {
+			info.a->OnCollisionBegin(info.b);
+			info.b->OnCollisionBegin(info.a);
+			info.isEntered = false;
 		}
 
-		CollisionDetection::CollisionInfo& in = const_cast<CollisionDetection::CollisionInfo&>(*i);
-		in.framesLeft--;
+		info.framesLeft--;
 
-		if ((*i).framesLeft < 0) {
-			i->a->OnCollisionEnd(i->b);
-			i->b->OnCollisionEnd(i->a);
+		if (info.framesLeft < 0) {
+			info.a->OnCollisionEnd(info.b);
+			info.b->OnCollisionEnd(info.a);
 			i = allCollisions.erase(i);
+		} else {
+			++i;
 		}
-		else {
+	}
+	for (auto i = allTriggers.begin(); i != allTriggers.end(); ) {
+		auto& info = const_cast<CollisionDetection::CollisionInfo&>(*i);
+		if (info.isEntered) {
+			info.a->OnTriggerBegin(info.b);
+			info.b->OnTriggerBegin(info.a);
+			info.isEntered = false;
+		}
+
+		info.framesLeft--;
+
+		if (info.framesLeft < 0) {
+			info.a->OnTriggerEnd(info.b);
+			info.b->OnTriggerEnd(info.a);
+			i = allTriggers.erase(i);
+		} else {
 			++i;
 		}
 	}
@@ -290,7 +312,7 @@ void PhysicsSystem::BroadPhase() {
 	std::vector<GameObject*>::const_iterator last;
 	gameWorld.GetObjectIterators(first, last);
 	for (auto i = first; i != last; i++) {
-		if ((*i)->GetPhysicsObject()->GetInverseMass() != 0) {
+		if (!(*i)->GetPhysicsObject()->IsStatic()) {
 			Vector3 halfSizes;
 			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
 				continue;
@@ -302,23 +324,34 @@ void PhysicsSystem::BroadPhase() {
 
 	dynamicQuadTree.OperateOnContents(
 		[&](std::list<QuadTreeEntry<GameObject*>>& data, const Vector2& subsetPos, const Vector2& subsetSize) {
-			CollisionDetection::CollisionInfo info{};
+			CollisionDetection::CollisionInfo collisionInfo{};
 			for (auto i = data.begin(); i != data.end(); i++) {
 				for (auto j = std::next(i); j != data.end(); j++) {
-					info.a = std::min((*i).object, (*j).object);
-					info.b = std::max((*i).object, (*j).object);
-					broadphaseCollisions.insert(info);
+					auto a = i->object;
+					auto b = j->object;
+					collisionInfo.a = std::min(a, b);
+					collisionInfo.b = std::max(a, b);
+					if (a->GetPhysicsObject()->IsTrigger() || b->GetPhysicsObject()->IsTrigger()) {
+						broadphaseTriggers.insert(collisionInfo);
+					} else {
+						broadphaseCollisions.insert(collisionInfo);
+					}
 				}
 			}
 			staticQuadTree.OperateOnContents(
 				[&](std::list<QuadTreeEntry<GameObject*>>& staticData, const Vector2& staticPos, const Vector2& staticSize) {
-					int counter = 0;
-					CollisionDetection::CollisionInfo info{};
+					CollisionDetection::CollisionInfo collisionInfo{};
 					for (auto i = data.begin(); i != data.end(); i++) {
 						for (auto j = staticData.begin(); j != staticData.end(); j++) {
-							info.a = std::min((*i).object, (*j).object);
-							info.b = std::max((*i).object, (*j).object);
-							broadphaseCollisions.insert(info);
+							auto a = i->object;
+							auto b = j->object;
+							collisionInfo.a = std::min(a, b);
+							collisionInfo.b = std::max(a, b);
+							if (a->GetPhysicsObject()->IsTrigger() || b->GetPhysicsObject()->IsTrigger()) {
+								broadphaseTriggers.insert(collisionInfo);
+							} else {
+								broadphaseCollisions.insert(collisionInfo);
+							}
 						}
 					}
 				}, subsetPos, subsetSize
@@ -339,9 +372,30 @@ void PhysicsSystem::NarrowPhase() {
 	for (auto i = broadphaseCollisions.begin(); i != broadphaseCollisions.end(); i++) {
 		auto info = *i;
 		if (CollisionDetection::ObjectIntersection(info.a, info.b, info)) {
-			info.framesLeft = numCollisionFrames;
-			ImpulseResolveCollision(*info.a, *info.b, info.point);
-			allCollisions.insert(info);
+			auto& exists = allCollisions.find(info);
+			if (exists != allCollisions.end()) {
+				auto& eInfo = const_cast<CollisionDetection::CollisionInfo&>(*exists);
+				ImpulseResolveCollision(*eInfo.a, *eInfo.b, eInfo.point);
+				eInfo.framesLeft = numCollisionFrames;
+			} else {
+				ImpulseResolveCollision(*info.a, *info.b, info.point);
+				info.framesLeft = numCollisionFrames;
+				info.isEntered = !allCollisions.contains(info);
+				allCollisions.insert(info);
+			}
+		}
+	}
+	for (auto i = broadphaseTriggers.begin(); i != broadphaseTriggers.end(); i++) {
+		auto info = *i;
+		if (CollisionDetection::ObjectIntersection(info.a, info.b, info)) {
+			auto& exists = allTriggers.find(info);
+			if (exists != allTriggers.end()) {
+				const_cast<CollisionDetection::CollisionInfo&>(*exists).framesLeft = numCollisionFrames;
+			} else {
+				info.framesLeft = numCollisionFrames;
+				info.isEntered = !allTriggers.contains(info);
+				allTriggers.insert(info);
+			}
 		}
 	}
 }

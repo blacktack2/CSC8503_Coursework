@@ -297,6 +297,7 @@ GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	floor->SetRenderObject(new RenderObject(&floor->GetTransform(), cubeMesh, basicTex, basicShader));
 	floor->SetPhysicsObject(new PhysicsObject(&floor->GetTransform(), floor->GetBoundingVolume()));
 
+	floor->GetPhysicsObject()->SetStatic();
 	floor->GetPhysicsObject()->SetInverseMass(0);
 	floor->GetPhysicsObject()->InitCubeInertia();
 
@@ -356,6 +357,7 @@ GameObject* TutorialGame::AddCubeToWorld(const Vector3& position, Vector3 dimens
 		cube->GetPhysicsObject()->InitCubeInertia();
 	}
 	if (inverseMass == 0) {
+		cube->GetPhysicsObject()->SetStatic();
 		cube->GetRenderObject()->SetColour(Vector4(1, 0.8f, 0.8f, 1));
 	}
 
@@ -477,6 +479,28 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 	return apple;
 }
 
+GameObject* NCL::CSC8503::TutorialGame::AddTriggerToWorld(const Vector3& position, float size) {
+	GameObject* trigger = new GameObject();
+
+	SphereVolume* volume = new SphereVolume(size);
+	trigger->SetBoundingVolume((CollisionVolume*)volume);
+	trigger->GetTransform()
+		.SetScale(Vector3(size))
+		.SetPosition(position);
+
+	trigger->SetRenderObject(new RenderObject(&trigger->GetTransform(), sphereMesh, nullptr, basicShader));
+	trigger->GetRenderObject()->SetColour(Vector4(1, 0.5f, 0.5f, 0.5f));
+
+	trigger->SetPhysicsObject(new PhysicsObject(&trigger->GetTransform(), trigger->GetBoundingVolume(), true));
+	trigger->GetPhysicsObject()->SetInverseMass(0);
+	trigger->GetPhysicsObject()->InitAxisAlignedInertia();
+	trigger->GetPhysicsObject()->SetStatic();
+
+	world->AddGameObject(trigger);
+
+	return trigger;
+}
+
 void TutorialGame::InitDefaultFloor() {
 	AddFloorToWorld(Vector3(0, 0, 0));
 }
@@ -485,6 +509,7 @@ void TutorialGame::InitGameExamples() {
 	AddPlayerToWorld(Vector3(0, 5, 0));
 	AddEnemyToWorld(Vector3(5, 5, 0));
 	AddBonusToWorld(Vector3(10, 5, 0));
+	AddTriggerToWorld(Vector3(20, 5, 0), 10);
 }
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {

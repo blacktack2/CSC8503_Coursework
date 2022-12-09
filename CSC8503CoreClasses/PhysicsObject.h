@@ -9,7 +9,7 @@ namespace NCL {
 
 		class PhysicsObject	{
 		public:
-			PhysicsObject(Transform* parentTransform, const CollisionVolume* parentVolume);
+			PhysicsObject(Transform* parentTransform, const CollisionVolume* parentVolume, bool isTrigger = false);
 			~PhysicsObject();
 
 			Vector3 GetLinearVelocity() const {
@@ -72,9 +72,22 @@ namespace NCL {
 				return inverseInteriaTensor;
 			}
 
+			void SetStatic(bool s = true) {
+				isStatic = s;
+			}
+
+			bool IsTrigger() const {
+				return isTrigger;
+			}
+			bool IsStatic() const {
+				return isStatic;
+			}
 		protected:
 			const CollisionVolume* volume;
-			Transform*		transform;
+			Transform* transform;
+
+			bool isTrigger;
+			bool isStatic;
 
 			float inverseMass;
 			float elasticity;
