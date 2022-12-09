@@ -306,6 +306,7 @@ compare the collisions that we absolutely need to.
 */
 void PhysicsSystem::BroadPhase() {
 	broadphaseCollisions.clear();
+	broadphaseTriggers.clear();
 	dynamicQuadTree.Clear();
 
 	std::vector<GameObject*>::const_iterator first;
