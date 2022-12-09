@@ -8,6 +8,8 @@ namespace NCL {
 			virtual ~Constraint() {}
 
 			virtual void UpdateConstraint(float dt) = 0;
+
+			bool markDelete = false;
 		};
 	}
 }

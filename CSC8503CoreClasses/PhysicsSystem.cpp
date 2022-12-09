@@ -513,6 +513,10 @@ void PhysicsSystem::UpdateConstraints(float dt) {
 	gameWorld.GetConstraintIterators(first, last);
 
 	for (auto i = first; i != last; ++i) {
-		(*i)->UpdateConstraint(dt);
+		if ((*i)->markDelete) {
+			gameWorld.RemoveConstraint(i, true);
+		} else {
+			(*i)->UpdateConstraint(dt);
+		}
 	}
 }

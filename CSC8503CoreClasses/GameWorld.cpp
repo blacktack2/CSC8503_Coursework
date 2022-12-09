@@ -135,6 +135,15 @@ void GameWorld::RemoveConstraint(Constraint* c, bool andDelete) {
 	}
 }
 
+void NCL::CSC8503::GameWorld::RemoveConstraint(std::vector<Constraint*>::const_iterator c, bool andDelete) {
+	if (andDelete) {
+		delete *c;
+		constraints.erase(c);
+	} else {
+		constraints.erase(c);
+	}
+}
+
 void GameWorld::GetConstraintIterators(
 	std::vector<Constraint*>::const_iterator& first,
 	std::vector<Constraint*>::const_iterator& last) const {
