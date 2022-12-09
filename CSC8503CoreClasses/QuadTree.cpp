@@ -37,10 +37,9 @@ void QuadTreeNode<T>::Insert(T& object, const Vector2& objectPos, const Vector2&
 		contents.emplace_back(object, objectPos, objectSize);
 		if ((int)contents.size() > 4 && depthLeft > 0) {
 			Split();
-			for (const auto& i : contents) {
-				for (int j = 0; j < 4; j++) {
-					auto entry = i;
-					children[j]->Insert(entry.object, entry.pos, entry.size, depthLeft - 1, maxSize);
+			for (auto& entry : contents) {
+				for (int c = 0; c < 4; c++) {
+					children[c]->Insert(entry.object, entry.pos, entry.size, depthLeft - 1, maxSize);
 				}
 			}
 			contents.clear();
@@ -90,8 +89,10 @@ void QuadTreeNode<T>::Clear() {
 		for (int i = 0; i < 4; i++) {
 			children[i]->PushToStack();
 		}
+		isSplit = false;
+	} else {
+		contents.clear();
 	}
-	isSplit = false;
 }
 
 template<class T>

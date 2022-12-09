@@ -151,6 +151,7 @@ void NCL::CSC8503::PhysicsSystem::UpdateStaticTree() {
 			staticQuadTree.Insert(*i, Vector2(pos.x, pos.z), Vector2(halfSizes.x, halfSizes.z));
 		}
 	}
+	std::cout << "Static Tree Created\n";
 }
 
 /*
