@@ -176,7 +176,7 @@ void PhysicsSystem::UpdateCollisionList() {
 
 		info.framesLeft--;
 
-		if (info.framesLeft < 0) {
+		if (info.framesLeft < 0 || info.a->IsMarkedDelete() || info.b->IsMarkedDelete()) {
 			info.a->OnCollisionEnd(info.b);
 			info.b->OnCollisionEnd(info.a);
 			i = allCollisions.erase(i);
@@ -194,7 +194,7 @@ void PhysicsSystem::UpdateCollisionList() {
 
 		info.framesLeft--;
 
-		if (info.framesLeft < 0) {
+		if (info.framesLeft < 0 || info.a->IsMarkedDelete() || info.b->IsMarkedDelete()) {
 			info.a->OnTriggerEnd(info.b);
 			info.b->OnTriggerEnd(info.a);
 			i = allTriggers.erase(i);

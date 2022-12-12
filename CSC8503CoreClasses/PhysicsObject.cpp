@@ -16,6 +16,27 @@ PhysicsObject::PhysicsObject(Transform* parentTransform, const CollisionVolume* 
 	isStatic = false;
 }
 
+PhysicsObject::PhysicsObject(PhysicsObject& other, Transform* parentTransform) {
+	transform = parentTransform;
+	volume = other.volume;
+
+	isTrigger = other.isTrigger;
+	isStatic  = other.isStatic;
+
+	inverseMass = other.inverseMass;
+	elasticity = other.elasticity;
+	friction = other.friction;
+
+	linearVelocity = other.linearVelocity;
+	force = other.force;
+
+	angularVelocity = other.angularVelocity;
+	torque = other.torque;
+	inverseInertia = other.inverseInertia;
+	inertiaTensor = other.inertiaTensor;
+	inverseInteriaTensor = other.inverseInteriaTensor;
+}
+
 PhysicsObject::~PhysicsObject()	{
 
 }

@@ -14,6 +14,7 @@ namespace NCL {
 		{
 		public:
 			RenderObject(Transform* parentTransform, MeshGeometry* mesh, TextureBase* tex, ShaderBase* shader);
+			RenderObject(RenderObject& other, Transform* parentTransform);
 			~RenderObject();
 
 			void SetDefaultTexture(TextureBase* t) {
@@ -45,10 +46,10 @@ namespace NCL {
 			}
 
 		protected:
+			Transform*		transform;
 			MeshGeometry*	mesh;
 			TextureBase*	texture;
 			ShaderBase*		shader;
-			Transform*		transform;
 			Vector4			colour;
 		};
 	}

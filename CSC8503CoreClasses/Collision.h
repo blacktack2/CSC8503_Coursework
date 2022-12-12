@@ -3,15 +3,25 @@
 namespace NCL {
 	enum class CollisionLayer {
 		Default = 0,
-		Layer1,
-		Layer2,
-		MAX_LAYER
+		Player,
+		Enemy,
+		PlayerProj,
+		EnemyProj,
+		MAX_LAYER,
+
+		InteractionDefault    = 1 << (int)Default | 1 << (int)Player | 1 << (int)Enemy | 1 << (int)PlayerProj | 1 << (int)EnemyProj,
+		InteractionPlayer     = 1 << (int)Default | 1 << (int)Player | 1 << (int)Enemy |                        1 << (int)EnemyProj,
+		InteractionEnemy      = 1 << (int)Default | 1 << (int)Player | 1 << (int)Enemy | 1 << (int)PlayerProj                      ,
+		InteractionPlayerProj = 1 << (int)Default |                    1 << (int)Enemy                                             ,
+		InteractionEnemyProj  = 1 << (int)Default | 1 << (int)Player                                                               ,
 	};
 
-	const int layerInteractions[3] = {
-		1 << (int)CollisionLayer::Default | 1 << (int)CollisionLayer::Layer1, // Default
-		1 << (int)CollisionLayer::Default | 1 << (int)CollisionLayer::Layer1, // Layer1
-		1 << (int)CollisionLayer::Layer2                                      // Layer2
+	const int layerInteractions[(size_t)CollisionLayer::MAX_LAYER] = {
+		(int)CollisionLayer::InteractionDefault,
+		(int)CollisionLayer::InteractionPlayer,
+		(int)CollisionLayer::InteractionEnemy,
+		(int)CollisionLayer::InteractionPlayerProj,
+		(int)CollisionLayer::InteractionEnemyProj,
 	};
 
 	static inline bool DoCollisionLayersOverlap(CollisionLayer a, CollisionLayer b) {

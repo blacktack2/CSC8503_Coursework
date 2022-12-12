@@ -20,6 +20,8 @@ namespace NCL {
 		}
 		~CollisionVolume() {}
 
+		static CollisionVolume* Clone(CollisionVolume& other);
+
 		VolumeType type;
 		CollisionLayer layer;
 	};

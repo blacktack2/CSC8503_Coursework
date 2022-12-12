@@ -10,6 +10,7 @@ namespace NCL {
 		class PhysicsObject	{
 		public:
 			PhysicsObject(Transform* parentTransform, const CollisionVolume* parentVolume, bool isTrigger = false);
+			PhysicsObject(PhysicsObject& other, Transform* parentTransform);
 			~PhysicsObject();
 
 			Vector3 GetLinearVelocity() const {
@@ -106,4 +107,3 @@ namespace NCL {
 		};
 	}
 }
-

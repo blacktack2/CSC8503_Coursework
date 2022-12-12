@@ -1,17 +1,22 @@
 #pragma once
-#include "Transform.h"
 #include "CollisionVolume.h"
+#include "Transform.h"
 
 using std::vector;
 
 namespace NCL::CSC8503 {
+	class GameWorld;
 	class NetworkObject;
-	class RenderObject;
 	class PhysicsObject;
+	class RenderObject;
 
 	class GameObject	{
 	public:
-		GameObject(std::string name = "");
+		GameObject(GameWorld& gameWorld, std::string name = "");
+
+		GameObject(GameObject& other);
+		GameObject& operator=(GameObject other);
+
 		~GameObject();
 
 		virtual void Update(float dt) {}
@@ -65,11 +70,11 @@ namespace NCL::CSC8503 {
 		}
 
 		virtual void OnTriggerBegin(GameObject* otherObject) {
-			std::cout << "OnTriggerBegin event occured!\n";
+			//std::cout << "OnTriggerBegin event occured!\n";
 		}
 
 		virtual void OnTriggerEnd(GameObject* otherObject) {
-			std::cout << "OnTriggerEnd event occured!\n";
+			//std::cout << "OnTriggerEnd event occured!\n";
 		}
 
 		bool GetBroadphaseAABB(Vector3&outsize) const;
@@ -80,23 +85,32 @@ namespace NCL::CSC8503 {
 			worldID = newID;
 		}
 
-		int		GetWorldID() const {
+		int GetWorldID() const {
 			return worldID;
 		}
 
+		void Delete() {
+			markDelete = true;
+		}
+		bool IsMarkedDelete() {
+			return markDelete;
+		}
 	protected:
-		Transform			transform;
+		GameWorld& gameWorld;
 
-		CollisionVolume*	boundingVolume;
-		PhysicsObject*		physicsObject;
-		RenderObject*		renderObject;
-		NetworkObject*		networkObject;
+		Transform transform;
 
-		bool		isActive;
-		int			worldID;
+		CollisionVolume* boundingVolume;
+		PhysicsObject*   physicsObject;
+		RenderObject*    renderObject;
+		NetworkObject*   networkObject;
+
+		bool isActive;
+		int  worldID;
 		std::string	name;
 
 		Vector3 broadphaseAABB;
+	private:
+		bool markDelete = false;
 	};
 }
-

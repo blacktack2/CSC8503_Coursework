@@ -5,10 +5,12 @@
 
 namespace NCL {
     namespace CSC8503 {
+		class GameWorld;
         class StateMachine;
+
         class StateGameObject : public GameObject  {
         public:
-            StateGameObject(std::string name = "");
+            StateGameObject(GameWorld& gameWorld, std::string name = "");
             ~StateGameObject();
 
             virtual void Update(float dt);

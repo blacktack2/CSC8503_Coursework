@@ -2,18 +2,18 @@
 #include "CollisionVolume.h"
 
 namespace NCL {
-    class CapsuleVolume : public CollisionVolume
-    {
+    class CapsuleVolume : public CollisionVolume {
     public:
         CapsuleVolume(float halfHeight, float radius, CollisionLayer layer = CollisionLayer::Default) {
-            this->halfHeight    = halfHeight;
-            this->radius        = radius;
-            this->type          = VolumeType::Capsule;
-			this->layer         = layer;
+            this->halfHeight = halfHeight;
+            this->radius     = radius;
+            this->type       = VolumeType::Capsule;
+			this->layer      = layer;
         };
         ~CapsuleVolume() {
 
         }
+
         float GetRadius() const {
             return radius;
         }
@@ -21,7 +21,6 @@ namespace NCL {
         float GetHalfHeight() const {
             return halfHeight;
         }
-
     protected:
         float radius;
         float halfHeight;

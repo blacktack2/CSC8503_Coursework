@@ -1,12 +1,13 @@
-#include "GameObject.h"
 #include "CollisionDetection.h"
+#include "GameObject.h"
+#include "GameWorld.h"
+#include "NetworkObject.h"
 #include "PhysicsObject.h"
 #include "RenderObject.h"
-#include "NetworkObject.h"
 
 using namespace NCL::CSC8503;
 
-GameObject::GameObject(string objectName)	{
+GameObject::GameObject(GameWorld& gameWorld, string objectName) : gameWorld(gameWorld) {
 	name			= objectName;
 	worldID			= -1;
 	isActive		= true;
@@ -14,6 +15,37 @@ GameObject::GameObject(string objectName)	{
 	physicsObject	= nullptr;
 	renderObject	= nullptr;
 	networkObject	= nullptr;
+}
+
+GameObject::GameObject(GameObject& other) : gameWorld(other.gameWorld) {
+	transform = other.transform;
+	boundingVolume = other.boundingVolume == nullptr ? nullptr : CollisionVolume::Clone(*other.boundingVolume);
+	physicsObject  = other.physicsObject  == nullptr ? nullptr : new PhysicsObject(*other.physicsObject, &transform);
+	renderObject   = other.renderObject   == nullptr ? nullptr : new RenderObject(*other.renderObject, &transform);
+	networkObject  = other.networkObject  == nullptr ? nullptr : new NetworkObject(*other.networkObject);
+
+	isActive = other.isActive;
+	worldID = -1;
+	name = other.name + "(Copy)";
+
+	broadphaseAABB = other.broadphaseAABB;
+}
+
+GameObject& GameObject::operator=(GameObject other) {
+	gameWorld = other.gameWorld;
+
+	transform = other.transform;
+	boundingVolume = other.boundingVolume == nullptr ? nullptr : CollisionVolume::Clone(*other.boundingVolume);
+	physicsObject  = other.physicsObject  == nullptr ? nullptr : new PhysicsObject(*other.physicsObject   );
+	renderObject   = other.renderObject   == nullptr ? nullptr : new RenderObject(*other.renderObject     );
+	networkObject  = other.networkObject  == nullptr ? nullptr : new NetworkObject(*other.networkObject   );
+
+	isActive = other.isActive;
+	worldID = -1;
+	name = other.name + "(Copy)";
+
+	broadphaseAABB = other.broadphaseAABB;
+	return *this;
 }
 
 GameObject::~GameObject()	{

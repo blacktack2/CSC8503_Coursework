@@ -40,6 +40,9 @@ namespace NCL::CSC8503 {
 	class NetworkObject		{
 	public:
 		NetworkObject(GameObject& o, int id);
+
+		NetworkObject(NetworkObject& other, GameObject& o);
+
 		virtual ~NetworkObject();
 
 		//Called by clients
@@ -48,9 +51,7 @@ namespace NCL::CSC8503 {
 		virtual bool WritePacket(GamePacket** p, bool deltaFrame, int stateID);
 
 		void UpdateStateHistory(int minID);
-
 	protected:
-
 		NetworkState& GetLatestNetworkState();
 
 		bool GetNetworkState(int frameID, NetworkState& state);

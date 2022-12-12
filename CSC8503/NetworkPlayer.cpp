@@ -1,10 +1,12 @@
 #include "NetworkPlayer.h"
+
+#include "GameWorld.h"
 #include "NetworkedGame.h"
 
 using namespace NCL;
 using namespace CSC8503;
 
-NetworkPlayer::NetworkPlayer(NetworkedGame* game, int num)	{
+NetworkPlayer::NetworkPlayer(GameWorld& gameWorld, NetworkedGame* game, int num) : GameObject(gameWorld) {
 	this->game = game;
 	playerNum  = num;
 }

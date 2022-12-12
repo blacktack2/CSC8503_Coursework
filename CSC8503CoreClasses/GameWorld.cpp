@@ -84,6 +84,18 @@ void GameWorld::UpdateWorld(float dt) {
 	}
 }
 
+void NCL::CSC8503::GameWorld::PostUpdateWorld() {
+	gameObjects.erase(std::remove_if(gameObjects.begin(), gameObjects.end(),
+		[](GameObject* o) {
+			if (o->IsMarkedDelete()) {
+				delete o;
+				return true;
+			}
+			return false;
+		}
+	), gameObjects.end());
+}
+
 bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject, GameObject* ignoreThis) const {
 	//The simplest raycast just goes through each object and sees if there's a collision
 	RayCollision collision;

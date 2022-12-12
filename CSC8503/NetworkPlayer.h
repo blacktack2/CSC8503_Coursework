@@ -4,11 +4,12 @@
 
 namespace NCL {
 	namespace CSC8503 {
+		class GameWorld;
 		class NetworkedGame;
 
 		class NetworkPlayer : public GameObject {
 		public:
-			NetworkPlayer(NetworkedGame* game, int num);
+			NetworkPlayer(GameWorld& gameWorld, NetworkedGame* game, int num);
 			~NetworkPlayer();
 
 			void OnCollisionBegin(GameObject* otherObject) override;

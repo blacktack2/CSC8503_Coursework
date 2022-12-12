@@ -9,6 +9,17 @@ NetworkObject::NetworkObject(GameObject& o, int id) : object(o)	{
 	networkID   = id;
 }
 
+NetworkObject::NetworkObject(NetworkObject& other, GameObject& o) : object(o) {
+	lastFullState = other.lastFullState;
+
+	std::copy(other.stateHistory.begin(), other.stateHistory.end(), std::back_inserter(stateHistory));
+
+	deltaErrors = other.deltaErrors;
+	fullErrors = other.fullErrors;
+
+	networkID = other.networkID;
+}
+
 NetworkObject::~NetworkObject()	{
 }
 

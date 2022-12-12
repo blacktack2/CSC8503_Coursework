@@ -2,8 +2,7 @@
 #include "CollisionVolume.h"
 
 namespace NCL {
-	class SphereVolume : CollisionVolume
-	{
+	class SphereVolume : CollisionVolume {
 	public:
 		SphereVolume(float sphereRadius = 1.0f, CollisionLayer layer = CollisionLayer::Default) {
 			type	    = VolumeType::Sphere;

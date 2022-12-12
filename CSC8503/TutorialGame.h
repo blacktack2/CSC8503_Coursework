@@ -9,13 +9,14 @@
 
 namespace NCL {
 	namespace CSC8503 {
-		class TutorialGame		{
+		class Bullet;
+
+		class TutorialGame {
 		public:
 			TutorialGame();
 			~TutorialGame();
 
 			virtual void UpdateGame(float dt);
-
 		protected:
 			enum class InitMode {
 				MIXED_GRID,
@@ -27,6 +28,7 @@ namespace NCL {
 				PERFORMANCE_TEST
 			};
 			void InitialiseAssets();
+			void InitialisePrefabs();
 
 			void InitCamera();
 			void UpdateKeys();
@@ -98,6 +100,8 @@ namespace NCL {
 			}
 
 			GameObject* objClosest = nullptr;
+
+			Bullet* bulletPrefab = nullptr;
 		};
 	}
 }
