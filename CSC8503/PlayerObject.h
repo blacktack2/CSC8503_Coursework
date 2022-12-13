@@ -9,6 +9,7 @@
 namespace NCL {
 	namespace CSC8503 {
 		class Bullet;
+		class Constraint;
 
 		class PlayerObject : public GameObject {
 		public:
@@ -26,6 +27,8 @@ namespace NCL {
 			void FireLasers();
 
 			Bullet& bulletPrefab;
+
+			Constraint* groundOrientationConstraint;
 
 			const Vector3 eyePosL = Vector3(-0.1f, 0.9f, -1.0f);
 			const Vector3 eyePosR = Vector3( 0.1f, 0.9f, -1.0f);

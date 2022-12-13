@@ -1,14 +1,25 @@
 #include "OrientationConstraint.h"
+
 #include "GameObject.h"
 #include "PhysicsObject.h"
+
 using namespace NCL;
 using namespace Maths;
 using namespace CSC8503;
 
-OrientationConstraint::OrientationConstraint(GameObject* a, GameObject* b, Vector3 f) {
-	objectA = a;
-	objectB = b;
-	forward = f;
+OrientationConstraint::OrientationConstraint(GameObject* primary, GameObject* hinge, Vector3 forward) {
+	hingeObject = hinge;
+	primaryObject = primary;
+	direction = forward;
+
+	currentAction = &OrientationConstraint::UpdateLookat;
+}
+
+OrientationConstraint::OrientationConstraint(GameObject* primary, Vector3 dir) {
+	primaryObject = primary;
+	direction = dir;
+
+	currentAction = &OrientationConstraint::UpdateFixed;
 }
 
 OrientationConstraint::~OrientationConstraint() {
@@ -16,10 +27,14 @@ OrientationConstraint::~OrientationConstraint() {
 }
 
 void OrientationConstraint::UpdateConstraint(float dt) {
-	Vector3 relativePos = objectA->GetTransform().GetPosition() - objectB->GetTransform().GetPosition();
+	(*this.*currentAction)(dt);
+}
+
+void OrientationConstraint::UpdateLookat(float dt) {
+	Vector3 relativePos = hingeObject->GetTransform().GetPosition() - primaryObject->GetTransform().GetPosition();
 
 	Vector3 expectedDirection = relativePos.Normalised();
-	Vector3 actualDirection = objectB->GetTransform().GetOrientation() * forward;
+	Vector3 actualDirection = primaryObject->GetTransform().GetOrientation() * direction;
 
 	Vector3 directionDelta = expectedDirection - actualDirection;
 
@@ -29,7 +44,7 @@ void OrientationConstraint::UpdateConstraint(float dt) {
 
 	float offset = directionDelta.Length();
 
-	PhysicsObject* physB = objectB->GetPhysicsObject();
+	PhysicsObject* physB = primaryObject->GetPhysicsObject();
 
 	Matrix3 inertia = physB->GetInertiaTensor();
 
@@ -39,4 +54,27 @@ void OrientationConstraint::UpdateConstraint(float dt) {
 	Vector3 angularImpulse = (inertia * Vector3::Cross(directionDelta, expectedDirection)) * bias;
 
 	physB->ApplyAngularImpulse(angularImpulse);
+}
+
+void OrientationConstraint::UpdateFixed(float dt) {
+	Vector3 actualDirection = primaryObject->GetTransform().GetOrientation() * direction;
+
+	Vector3 directionDelta = direction - actualDirection;
+
+	if (directionDelta == Vector3(0)) {
+		return;
+	}
+
+	float offset = directionDelta.Length();
+
+	PhysicsObject* phys = primaryObject->GetPhysicsObject();
+
+	Matrix3 inertia = phys->GetInertiaTensor();
+
+	float biasFactor = 0.01f;
+	float bias = -(biasFactor / dt) * offset;
+
+	Vector3 angularImpulse = (inertia * Vector3::Cross(directionDelta, direction)) * bias;
+
+	phys->ApplyAngularImpulse(angularImpulse);
 }

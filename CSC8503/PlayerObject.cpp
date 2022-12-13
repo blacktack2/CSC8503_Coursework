@@ -1,7 +1,9 @@
 #include "PlayerObject.h"
 
 #include "Bullet.h"
+#include "Constraint.h"
 #include "GameWorld.h"
+#include "OrientationConstraint.h"
 #include "PhysicsObject.h"
 #include "Window.h"
 
@@ -12,10 +14,13 @@ using namespace CSC8503;
 
 PlayerObject::PlayerObject(GameWorld& gameWorld, int id, Bullet& bulletPrefab) : GameObject(gameWorld),
 id(id), bulletPrefab(bulletPrefab), rootSequence(std::string("Root-Player").append(std::to_string(id))) {
+	groundOrientationConstraint = new OrientationConstraint(this, Vector3(0, 1, 0));
+
 	BehaviourAction* groundMovement = new BehaviourAction(std::string("GroundMovement-Player").append(std::to_string(id)),
 		[&](float dt, BehaviourState state)->BehaviourState {
 			switch (state) {
 				case Initialise:
+					gameWorld.AddConstraint(groundOrientationConstraint);
 					return Ongoing;
 				case Ongoing:
 					HandleGroundInput(dt);
@@ -45,6 +50,7 @@ id(id), bulletPrefab(bulletPrefab), rootSequence(std::string("Root-Player").appe
 }
 
 PlayerObject::~PlayerObject() {
+	delete groundOrientationConstraint;
 }
 
 void PlayerObject::Update(float dt) {
