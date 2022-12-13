@@ -449,7 +449,7 @@ GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, bool cameraF
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
 
 	character->GetPhysicsObject()->SetInverseMass(1);
-	character->GetPhysicsObject()->InitCapsuleInertia();
+	character->GetPhysicsObject()->InitSphereInertia();
 
 	world->AddGameObject(character);
 
@@ -505,7 +505,7 @@ GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
 }
 
 GameObject* TutorialGame::AddTriggerToWorld(const Vector3& position, float size) {
-	GameObject* trigger = new GameObject(*world);
+	GameObject* trigger = new GameObject(*world, "Trigger");
 
 	SphereVolume* volume = new SphereVolume(size);
 	trigger->SetBoundingVolume((CollisionVolume*)volume);

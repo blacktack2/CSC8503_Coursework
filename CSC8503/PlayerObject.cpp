@@ -4,8 +4,11 @@
 #include "Constraint.h"
 #include "GameWorld.h"
 #include "OrientationConstraint.h"
+#include "PositionConstraint.h"
 #include "PhysicsObject.h"
 #include "Window.h"
+
+#include "RenderObject.h"
 
 #include <iostream>
 
@@ -13,19 +16,56 @@ using namespace NCL;
 using namespace CSC8503;
 
 PlayerObject::PlayerObject(GameWorld& gameWorld, int id, Bullet& bulletPrefab) : GameObject(gameWorld),
-id(id), bulletPrefab(bulletPrefab), rootSequence(std::string("Root-Player").append(std::to_string(id))) {
+id(id), bulletPrefab(bulletPrefab), behaviourRoot(std::string("Root-Player").append(std::to_string(id))), groundAirSelector(std::string("GroundAir-Player").append(std::to_string(id))) {
+	groundTrigger = new GameObject(gameWorld, std::string("GroundTrigger-Player").append(std::to_string(id)));
+	groundTrigger->GetTransform().SetScale(Vector3(0.1f));
+	groundTrigger->SetBoundingVolume((CollisionVolume*)new AABBVolume(Vector3(0.1f), CollisionLayer::PlayerTrig));
+	groundTrigger->SetPhysicsObject(new PhysicsObject(&groundTrigger->GetTransform(), groundTrigger->GetBoundingVolume(), true));
+	groundTrigger->GetPhysicsObject()->SetInverseMass(0);
+	groundTrigger->GetPhysicsObject()->SetElasticity(0);
+	groundTrigger->GetPhysicsObject()->InitAxisAlignedInertia();
+	groundTrigger->OnTriggerBeginCallback = [&](GameObject* other) { groundTriggerOverlaps++; };
+	groundTrigger->OnTriggerEndCallback = [&](GameObject* other) { groundTriggerOverlaps--; };
+	gameWorld.AddGameObject(groundTrigger);
+
 	groundOrientationConstraint = new OrientationConstraint(this, Vector3(0, 1, 0));
 
-	BehaviourAction* groundMovement = new BehaviourAction(std::string("GroundMovement-Player").append(std::to_string(id)),
+	BehaviourAction* groundedActions = new BehaviourAction(std::string("Grounded-Player").append(std::to_string(id)),
 		[&](float dt, BehaviourState state)->BehaviourState {
 			switch (state) {
 				case Initialise:
-					gameWorld.AddConstraint(groundOrientationConstraint);
-					return Ongoing;
-				case Ongoing:
-					HandleGroundInput(dt);
-					return Ongoing;
-				case Success: case Failure: default:
+					if (groundTriggerOverlaps == 0) {
+						return Failure;
+					} else {
+						if (!isGrounded) {
+							gameWorld.AddConstraint(groundOrientationConstraint);
+							isGrounded = true;
+							std::cout << "Grounded\n";
+						}
+						HandleGroundInput(dt);
+						return Success;
+					}
+				case Ongoing: case Success: case Failure: default:
+					return state;
+			}
+		}
+	);
+
+	BehaviourAction* airborneActions = new BehaviourAction(std::string("Airborne-Player").append(std::to_string(id)),
+		[&](float dt, BehaviourState state)->BehaviourState {
+			switch (state) {
+				case Initialise:
+					if (groundTriggerOverlaps == 0) {
+						if (isGrounded) {
+							gameWorld.RemoveConstraint(groundOrientationConstraint);
+							isGrounded = false;
+							std::cout << "Airborn\n";
+						}
+						return Success;
+					} else {
+						return Failure;
+					}
+				case Ongoing: case Success: case Failure: default:
 					return state;
 			}
 		}
@@ -33,34 +73,33 @@ id(id), bulletPrefab(bulletPrefab), rootSequence(std::string("Root-Player").appe
 
 	BehaviourAction* goatActions = new BehaviourAction(std::string("GoatActions-Player").append(std::to_string(id)),
 		[&](float dt, BehaviourState state)->BehaviourState {
-			switch (state) {
-				case Initialise:
-					return Ongoing;
-				case Ongoing:
-					HandleGoatActions(dt);
-					return Ongoing;
-				case Success: case Failure: default:
-					return state;
-			}
+			HandleGoatActions(dt);
+			return Success;
 		}
 	);
 
-	rootSequence.AddChild(groundMovement);
-	rootSequence.AddChild(goatActions);
+	groundAirSelector.AddChild(groundedActions);
+	groundAirSelector.AddChild(airborneActions);
+
+	behaviourRoot.AddChild(&groundAirSelector);
+	behaviourRoot.AddChild(goatActions);
 }
 
 PlayerObject::~PlayerObject() {
-	delete groundOrientationConstraint;
+
 }
 
 void PlayerObject::Update(float dt) {
-	rootSequence.Execute(dt);
+	groundTrigger->GetTransform().SetPosition(transform.GetPosition() + Vector3(0, -1, 0));
+	behaviourRoot.Reset();
+	while (behaviourRoot.Execute(dt) == Ongoing) {}
 }
 
 void PlayerObject::HandleGroundInput(float dt) {
 	const float moveForce = 40;
 	const float rotateTorque = 4;
-	const float jumpForce = 1000;
+	const Vector3 jumpForce = Vector3(0, 1000, 0);
+	const Vector3 jumpTorque = Vector3(1, 0, 1) * 500;
 	Vector3 movement = Vector3(0);
 	Vector3 rotation = Vector3(0);
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
@@ -76,7 +115,8 @@ void PlayerObject::HandleGroundInput(float dt) {
 		movement.z += moveForce;
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE)) {
-		movement.y += jumpForce;
+		movement += jumpForce;
+		rotation += Vector3((rand() * (1.0f / (float)RAND_MAX)), 0, (rand() * (1.0f / (float)RAND_MAX))) * jumpTorque;
 	}
 	physicsObject->AddForce(transform.GetOrientation() * movement);
 	physicsObject->AddTorque(rotation);

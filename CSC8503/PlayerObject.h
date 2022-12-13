@@ -19,7 +19,8 @@ namespace NCL {
 			virtual void Update(float dt) override;
 		protected:
 			int id;
-			BehaviourParallel rootSequence;
+			BehaviourParallel behaviourRoot;
+			BehaviourSelector groundAirSelector;
 		private:
 			void HandleGroundInput(float dt);
 			void HandleGoatActions(float dt);
@@ -28,7 +29,12 @@ namespace NCL {
 
 			Bullet& bulletPrefab;
 
+			GameObject* groundTrigger;
+
 			Constraint* groundOrientationConstraint;
+
+			int groundTriggerOverlaps = 0;
+			bool isGrounded = false;
 
 			const Vector3 eyePosL = Vector3(-0.1f, 0.9f, -1.0f);
 			const Vector3 eyePosR = Vector3( 0.1f, 0.9f, -1.0f);

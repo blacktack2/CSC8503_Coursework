@@ -7,21 +7,24 @@ namespace NCL {
 		Enemy,
 		PlayerProj,
 		EnemyProj,
+		PlayerTrig,
 		MAX_LAYER,
 
-		InteractionDefault    = 1 << (int)Default | 1 << (int)Player | 1 << (int)Enemy | 1 << (int)PlayerProj | 1 << (int)EnemyProj,
-		InteractionPlayer     = 1 << (int)Default | 1 << (int)Player | 1 << (int)Enemy |                        1 << (int)EnemyProj,
-		InteractionEnemy      = 1 << (int)Default | 1 << (int)Player | 1 << (int)Enemy | 1 << (int)PlayerProj                      ,
-		InteractionPlayerProj = 1 << (int)Default |                    1 << (int)Enemy                                             ,
-		InteractionEnemyProj  = 1 << (int)Default | 1 << (int)Player                                                               ,
+		InteractionDefault_    = 1 << (int)Default | 1 << (int)Player | 1 << (int)Enemy | 1 << (int)PlayerProj | 1 << (int)EnemyProj | 1 << (int)PlayerTrig,
+		InteractionPlayer_     = 1 << (int)Default |                    1 << (int)Enemy |                        1 << (int)EnemyProj                       ,
+		InteractionEnemy_      = 1 << (int)Default | 1 << (int)Player | 1 << (int)Enemy | 1 << (int)PlayerProj                                             ,
+		InteractionPlayerProj_ = 1 << (int)Default |                    1 << (int)Enemy                                                                    ,
+		InteractionEnemyProj_  = 1 << (int)Default | 1 << (int)Player                                                                                      ,
+		InteractionPlayerTrig_ = 1 << (int)Default                                                                                                         ,
 	};
 
 	const int layerInteractions[(size_t)CollisionLayer::MAX_LAYER] = {
-		(int)CollisionLayer::InteractionDefault,
-		(int)CollisionLayer::InteractionPlayer,
-		(int)CollisionLayer::InteractionEnemy,
-		(int)CollisionLayer::InteractionPlayerProj,
-		(int)CollisionLayer::InteractionEnemyProj,
+		(int)CollisionLayer::InteractionDefault_,
+		(int)CollisionLayer::InteractionPlayer_,
+		(int)CollisionLayer::InteractionEnemy_,
+		(int)CollisionLayer::InteractionPlayerProj_,
+		(int)CollisionLayer::InteractionEnemyProj_,
+		(int)CollisionLayer::InteractionPlayerTrig_,
 	};
 
 	static inline bool DoCollisionLayersOverlap(CollisionLayer a, CollisionLayer b) {

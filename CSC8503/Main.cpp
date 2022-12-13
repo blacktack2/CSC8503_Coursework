@@ -144,19 +144,19 @@ void TestBehaviourTree() {
 	lootSelection->AddChild(lookForTreasure);
 	lootSelection->AddChild(lookForItems);
 
-	BehaviourSequence* rootSequence = new BehaviourSequence("Root Sequence");
-	rootSequence->AddChild(roomSequence);
-	rootSequence->AddChild(lootSelection);
+	BehaviourSequence* behaviourRoot = new BehaviourSequence("Root Sequence");
+	behaviourRoot->AddChild(roomSequence);
+	behaviourRoot->AddChild(lootSelection);
 
 	std::cout << "Beginning Behaviour Tree test\n";
 	for (int i = 0; i < 5; i++) {
-		rootSequence->Reset();
+		behaviourRoot->Reset();
 		behaviourTimer = 0.0f;
 		distanceToTarget = rand() % 250;
 		BehaviourState state = Ongoing;
 		std::cout << "Going on an adventure!\n";
 		while (state == Ongoing) {
-			state = rootSequence->Execute(1.0f);
+			state = behaviourRoot->Execute(1.0f);
 		}
 		if (state == Success) {
 			std::cout << "A successful excursion!\n";
