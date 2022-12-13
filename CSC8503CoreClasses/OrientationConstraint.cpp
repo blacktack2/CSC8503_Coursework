@@ -34,7 +34,7 @@ void OrientationConstraint::UpdateLookat(float dt) {
 	Vector3 relativePos = hingeObject->GetTransform().GetPosition() - primaryObject->GetTransform().GetPosition();
 
 	Vector3 expectedDirection = relativePos.Normalised();
-	Vector3 actualDirection = primaryObject->GetTransform().GetOrientation() * direction;
+	Vector3 actualDirection = hingeObject->GetTransform().GetOrientation() * direction;
 
 	Vector3 directionDelta = expectedDirection - actualDirection;
 
@@ -44,11 +44,11 @@ void OrientationConstraint::UpdateLookat(float dt) {
 
 	float offset = directionDelta.Length();
 
-	PhysicsObject* physB = primaryObject->GetPhysicsObject();
+	PhysicsObject* physB = hingeObject->GetPhysicsObject();
 
 	Matrix3 inertia = physB->GetInertiaTensor();
 
-	float biasFactor = 0.01f;
+	float biasFactor = 0.0001f;
 	float bias = -(biasFactor / dt) * offset;
 
 	Vector3 angularImpulse = (inertia * Vector3::Cross(directionDelta, expectedDirection)) * bias;
@@ -71,10 +71,10 @@ void OrientationConstraint::UpdateFixed(float dt) {
 
 	Matrix3 inertia = phys->GetInertiaTensor();
 
-	float biasFactor = 0.01f;
+	float biasFactor = 0.0001f;
 	float bias = -(biasFactor / dt) * offset;
 
 	Vector3 angularImpulse = (inertia * Vector3::Cross(directionDelta, direction)) * bias;
 
-	phys->ApplyAngularImpulse(angularImpulse * 0.5f);
+	phys->ApplyAngularImpulse(angularImpulse);
 }
