@@ -98,9 +98,10 @@ void PlayerObject::Update(float dt) {
 void PlayerObject::HandleGroundInput(float dt) {
 	const float moveForce = 40;
 	const float rotateTorque = 4;
-	const Vector3 jumpForce = Vector3(0, 1000, 0);
+	const float jumpForce = 1000;
 	const Vector3 jumpTorque = Vector3(1, 0, 1) * 500;
-	Vector3 movement = Vector3(0);
+	float forwardThrust = 0;
+	float upwardThrust = 0;
 	Vector3 rotation = Vector3(0);
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::A)) {
 		rotation.y += rotateTorque;
@@ -109,16 +110,16 @@ void PlayerObject::HandleGroundInput(float dt) {
 		rotation.y -= rotateTorque;
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::W)) {
-		movement.z -= moveForce;
+		forwardThrust -= moveForce;
 	}
 	if (Window::GetKeyboard()->KeyDown(KeyboardKeys::S)) {
-		movement.z += moveForce;
+		forwardThrust += moveForce;
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE)) {
-		movement += jumpForce;
+		upwardThrust += jumpForce;
 		rotation += Vector3((rand() * (1.0f / (float)RAND_MAX)), 0, (rand() * (1.0f / (float)RAND_MAX))) * jumpTorque;
 	}
-	physicsObject->AddForce(transform.GetOrientation() * movement);
+	physicsObject->AddForce(transform.GetOrientation() * Vector3(0, 0, forwardThrust) + Vector3(0, upwardThrust, 0));
 	physicsObject->AddTorque(rotation);
 }
 
