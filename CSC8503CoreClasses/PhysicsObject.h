@@ -37,6 +37,30 @@ namespace NCL {
 				return inverseMass;
 			}
 
+			void SetElasticity(float elast) {
+				elasticity = elast;
+			}
+
+			float GetElasticity() const {
+				return elasticity;
+			}
+
+			void SetFriction(float frict) {
+				friction = frict;
+			}
+
+			float GetFriction() const {
+				return friction;
+			}
+
+			void SetGravWeight(float weight) {
+				gravWeight = weight;
+			}
+
+			float GetGravWeight() const {
+				return gravWeight;
+			}
+
 			void ApplyAngularImpulse(const Vector3& force);
 			void ApplyLinearImpulse(const Vector3& force);
 			
@@ -93,6 +117,7 @@ namespace NCL {
 			float inverseMass;
 			float elasticity;
 			float friction;
+			float gravWeight;
 
 			//linear stuff
 			Vector3 linearVelocity;

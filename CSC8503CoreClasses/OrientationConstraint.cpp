@@ -76,5 +76,5 @@ void OrientationConstraint::UpdateFixed(float dt) {
 
 	Vector3 angularImpulse = (inertia * Vector3::Cross(directionDelta, direction)) * bias;
 
-	phys->ApplyAngularImpulse(angularImpulse);
+	phys->ApplyAngularImpulse(angularImpulse * 0.5f);
 }
