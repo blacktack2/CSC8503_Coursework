@@ -323,9 +323,6 @@ void PhysicsSystem::BroadPhase() {
 			);
 		}
 	);
-
-	//dynamicQuadTree.DebugDraw();
-	//staticQuadTree.DebugDraw();
 }
 
 /*

@@ -86,6 +86,8 @@ void GameWorld::UpdateWorld(float dt) {
 	}
 
 	UpdateDynamicTree();
+	//dynamicQuadTree.DebugDraw();
+	//staticQuadTree.DebugDraw();
 }
 
 void GameWorld::PostUpdateWorld() {
