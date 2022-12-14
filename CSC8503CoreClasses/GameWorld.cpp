@@ -1,14 +1,14 @@
-#include "GameWorld.h"
-#include "GameObject.h"
-#include "Constraint.h"
-#include "CollisionDetection.h"
 #include "Camera.h"
-
+#include "CollisionDetection.h"
+#include "Constraint.h"
+#include "GameObject.h"
+#include "GameWorld.h"
+#include "PhysicsObject.h"
 
 using namespace NCL;
 using namespace NCL::CSC8503;
 
-GameWorld::GameWorld()	{
+GameWorld::GameWorld() : staticQuadTree(Vector2(1024, 1024), 7, 6), dynamicQuadTree(Vector2(1024, 1024), 7, 6) {
 	mainCamera = new Camera();
 
 	shuffleConstraints	= false;
@@ -21,6 +21,8 @@ GameWorld::~GameWorld()	{
 }
 
 void GameWorld::Clear() {
+	dynamicQuadTree.Clear();
+	staticQuadTree.Clear();
 	gameObjects.clear();
 	constraints.clear();
 	worldIDCounter		= 0;
@@ -82,9 +84,11 @@ void GameWorld::UpdateWorld(float dt) {
 	for (auto& go : gameObjects) {
 		go->Update(dt);
 	}
+
+	UpdateDynamicTree();
 }
 
-void NCL::CSC8503::GameWorld::PostUpdateWorld() {
+void GameWorld::PostUpdateWorld() {
 	gameObjects.erase(std::remove_if(gameObjects.begin(), gameObjects.end(),
 		[](GameObject* o) {
 			if (o->IsMarkedDelete()) {
@@ -96,33 +100,105 @@ void NCL::CSC8503::GameWorld::PostUpdateWorld() {
 	), gameObjects.end());
 }
 
-bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject, GameObject* ignoreThis) const {
+void GameWorld::UpdateStaticTree() {
+	staticQuadTree.Clear();
+	OperateOnContents(
+		[](GameObject* g) {
+			g->UpdateBroadphaseAABB();
+		}
+	);
+
+	for (auto i = gameObjects.begin(); i != gameObjects.end(); i++) {
+		if ((*i)->GetPhysicsObject()->IsStatic()) {
+			Vector3 halfSizes;
+			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
+				continue;
+			}
+			Vector3 pos = (*i)->GetTransform().GetPosition();
+			staticQuadTree.Insert(*i, Vector2(pos.x, pos.z), Vector2(halfSizes.x, halfSizes.z));
+		}
+	}
+}
+
+void GameWorld::UpdateDynamicTree() {
+	dynamicQuadTree.Clear();
+
+	for (auto i = gameObjects.begin(); i != gameObjects.end(); i++) {
+		if (!(*i)->GetPhysicsObject()->IsStatic()) {
+			Vector3 halfSizes;
+			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
+				continue;
+			}
+			Vector3 pos = (*i)->GetTransform().GetPosition();
+			dynamicQuadTree.Insert(*i, Vector2(pos.x, pos.z), Vector2(halfSizes.x, halfSizes.z));
+		}
+	}
+}
+
+void GameWorld::OperateOnStaticTree(QuadTreeNode<GameObject*>::QuadTreeFunc func, const Vector2* subsetPos, const Vector2* subsetSize) {
+	if (subsetPos == nullptr || subsetSize == nullptr) {
+		staticQuadTree.OperateOnContents(func);
+	} else {
+		staticQuadTree.OperateOnContents(func, *subsetPos, *subsetSize);
+	}
+}
+
+void GameWorld::OperateOnDynamicTree(QuadTreeNode<GameObject*>::QuadTreeFunc func, const Vector2* subsetPos, const Vector2* subsetSize) {
+	if (subsetPos == nullptr || subsetSize == nullptr) {
+		dynamicQuadTree.OperateOnContents(func);
+	} else {
+		dynamicQuadTree.OperateOnContents(func, *subsetPos, *subsetSize);
+	}
+}
+
+bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObject, GameObject* ignoreThis) {
 	//The simplest raycast just goes through each object and sees if there's a collision
 	RayCollision collision;
 
-	for (auto& i : gameObjects) {
-		if (!i->GetBoundingVolume()) { //objects might not be collideable etc...
-			continue;
-		}
-		if (i == ignoreThis) {
-			continue;
-		}
-		RayCollision thisCollision;
-		if (CollisionDetection::RayIntersection(r, *i, thisCollision)) {
-				
-			if (!closestObject) {	
-				closestCollision		= collision;
-				closestCollision.node = i;
-				return true;
-			}
-			else {
-				if (thisCollision.rayDistance < collision.rayDistance) {
-					thisCollision.node = i;
-					collision = thisCollision;
+	dynamicQuadTree.OperateOnContents(
+		[&](std::list<QuadTreeEntry<GameObject*>>& data, const Vector2& staticPos, const Vector2& staticSize) {
+			for (auto i : data) {
+				GameObject* go = i.object;
+				if (!go->GetBoundingVolume() || go == ignoreThis) {
+					continue;
+				}
+				RayCollision newCollision;
+				if (CollisionDetection::RayIntersection(r, *go, newCollision)) {
+					if (!closestObject) {
+						closestCollision = newCollision;
+						closestCollision.node = go;
+						return true;
+					} else if (newCollision.rayDistance < collision.rayDistance) {
+						newCollision.node = go;
+						collision = newCollision;
+					}
 				}
 			}
-		}
-	}
+		}, r
+	);
+
+	staticQuadTree.OperateOnContents(
+		[&](std::list<QuadTreeEntry<GameObject*>>& data, const Vector2& staticPos, const Vector2& staticSize) {
+			for (auto i : data) {
+				GameObject* go = i.object;
+				if (!go->GetBoundingVolume() || go == ignoreThis) {
+					continue;
+				}
+				RayCollision newCollision;
+				if (CollisionDetection::RayIntersection(r, *go, newCollision)) {
+					if (!closestObject) {
+						closestCollision = newCollision;
+						closestCollision.node = go;
+						return true;
+					} else if (newCollision.rayDistance < collision.rayDistance) {
+						newCollision.node = go;
+						collision = newCollision;
+					}
+				}
+			}
+		}, r
+	);
+
 	if (collision.node) {
 		closestCollision		= collision;
 		closestCollision.node	= collision.node;
@@ -147,7 +223,7 @@ void GameWorld::RemoveConstraint(Constraint* c, bool andDelete) {
 	}
 }
 
-void NCL::CSC8503::GameWorld::RemoveConstraint(std::vector<Constraint*>::const_iterator c, bool andDelete) {
+void GameWorld::RemoveConstraint(std::vector<Constraint*>::const_iterator c, bool andDelete) {
 	if (andDelete) {
 		delete *c;
 		constraints.erase(c);

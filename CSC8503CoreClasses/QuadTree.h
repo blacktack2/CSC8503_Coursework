@@ -1,11 +1,14 @@
 #pragma once
 
 namespace NCL {
+	namespace Maths {
+		class Ray;
+	}
 	using namespace Maths;
 	namespace CSC8503 {
+
 		template<class T>
 		class QuadTree;
-
 		template<class T>
 		class NodeStack;
 
@@ -36,6 +39,7 @@ namespace NCL {
 
 			void OperateOnContents(QuadTreeFunc& func);
 			void OperateOnContents(QuadTreeFunc& func, const Vector2& subsetPos, const Vector2& subsetSize);
+			void OperateOnContents(QuadTreeFunc& func, const Ray& ray);
 
 			void Split();
 			void Clear();
@@ -75,6 +79,7 @@ namespace NCL {
 			void Insert(T object, const Vector2& pos, const Vector2& size);
 			void OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc func);
 			void OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc func, const Vector2& subsetPos, const Vector2& subsetSize);
+			void OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc func, const Ray& ray);
 
 			void Clear();
 

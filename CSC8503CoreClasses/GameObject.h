@@ -18,8 +18,7 @@ namespace NCL::CSC8503 {
 
 		GameObject(GameWorld& gameWorld, std::string name = "");
 
-		GameObject(GameObject& other);
-		GameObject& operator=(GameObject other);
+		GameObject(GameWorld& gameWorld, GameObject& other);
 
 		~GameObject();
 

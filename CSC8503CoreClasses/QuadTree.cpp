@@ -2,10 +2,12 @@
 
 #include "CollisionDetection.h"
 #include "Debug.h"
+#include "Ray.h"
 #include "Vector2.h"
 #include "Vector3.h"
 using namespace NCL;
 using namespace CSC8503;
+using namespace Maths;
 
 template<class T>
 QuadTreeNode<T>::QuadTreeNode(NodeStack<T>& nodeStack) : nodeStack(nodeStack), isSplit(false) {
@@ -66,6 +68,20 @@ void QuadTreeNode<T>::OperateOnContents(QuadTreeFunc& func, const Vector2& subse
 	if (isSplit) {
 		for (int i = 0; i < 4; i++) {
 			children[i]->OperateOnContents(func, subsetPos, subsetSize);
+		}
+	} else if (!contents.empty()) {
+		func(contents, position, size);
+	}
+}
+
+template<class T>
+void QuadTreeNode<T>::OperateOnContents(QuadTreeFunc& func, const Ray& ray) {
+	if (!CollisionDetection::AASquareRayTest(position, size, Vector2(ray.GetPosition().x, ray.GetPosition().z), Vector2(ray.GetDirection().x, ray.GetDirection().z))) {
+		return;
+	}
+	if (isSplit) {
+		for (int i = 0; i < 4; i++) {
+			children[i]->OperateOnContents(func, ray);
 		}
 	} else if (!contents.empty()) {
 		func(contents, position, size);
@@ -159,6 +175,11 @@ void QuadTree<T>::OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc func)
 template<class T>
 void QuadTree<T>::OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc func, const Vector2& subsetPos, const Vector2& subsetSize) {
 	root.OperateOnContents(func, subsetPos, subsetSize);
+}
+
+template<class T>
+void QuadTree<T>::OperateOnContents(typename QuadTreeNode<T>::QuadTreeFunc func, const Ray& ray) {
+	root.OperateOnContents(func, ray);
 }
 
 template<class T>

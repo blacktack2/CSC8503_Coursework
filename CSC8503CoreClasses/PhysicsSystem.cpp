@@ -12,7 +12,7 @@
 using namespace NCL;
 using namespace CSC8503;
 
-PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g), staticQuadTree(Vector2(1024, 1024), 7, 6), dynamicQuadTree(Vector2(1024, 1024), 7, 6) {
+PhysicsSystem::PhysicsSystem(GameWorld& g) : gameWorld(g) {
 	dTOffset		= 0.0f;
 	globalDamping	= 0.995f;
 	SetGravity(Vector3(0.0f, -9.8f, 0.0f));
@@ -38,8 +38,6 @@ any collisions they are in.
 void PhysicsSystem::Clear() {
 	allCollisions.clear();
 	allTriggers.clear();
-	dynamicQuadTree.Clear();
-	staticQuadTree.Clear();
 	std::cout << "Clear\n";
 }
 
@@ -132,26 +130,6 @@ void PhysicsSystem::Update(float dt) {
 			std::cout << "Raising iteration count due to short physics time...(now " << realHZ << ")\n";
 		}
 	}
-}
-
-void NCL::CSC8503::PhysicsSystem::UpdateStaticTree() {
-	staticQuadTree.Clear();
-	UpdateObjectAABBs();
-
-	std::vector<GameObject*>::const_iterator first;
-	std::vector<GameObject*>::const_iterator last;
-	gameWorld.GetObjectIterators(first, last);
-	for (auto i = first; i != last; i++) {
-		if ((*i)->GetPhysicsObject()->IsStatic()) {
-			Vector3 halfSizes;
-			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
-				continue;
-			}
-			Vector3 pos = (*i)->GetTransform().GetPosition();
-			staticQuadTree.Insert(*i, Vector2(pos.x, pos.z), Vector2(halfSizes.x, halfSizes.z));
-		}
-	}
-	std::cout << "Static Tree Created\n";
 }
 
 /*
@@ -308,23 +286,8 @@ compare the collisions that we absolutely need to.
 void PhysicsSystem::BroadPhase() {
 	broadphaseCollisions.clear();
 	broadphaseTriggers.clear();
-	dynamicQuadTree.Clear();
 
-	std::vector<GameObject*>::const_iterator first;
-	std::vector<GameObject*>::const_iterator last;
-	gameWorld.GetObjectIterators(first, last);
-	for (auto i = first; i != last; i++) {
-		if (!(*i)->GetPhysicsObject()->IsStatic()) {
-			Vector3 halfSizes;
-			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
-				continue;
-			}
-			Vector3 pos = (*i)->GetTransform().GetPosition();
-			dynamicQuadTree.Insert(*i, Vector2(pos.x, pos.z), Vector2(halfSizes.x, halfSizes.z));
-		}
-	}
-
-	dynamicQuadTree.OperateOnContents(
+	gameWorld.OperateOnDynamicTree(
 		[&](std::list<QuadTreeEntry<GameObject*>>& data, const Vector2& subsetPos, const Vector2& subsetSize) {
 			CollisionDetection::CollisionInfo collisionInfo{};
 			for (auto i = data.begin(); i != data.end(); i++) {
@@ -340,7 +303,7 @@ void PhysicsSystem::BroadPhase() {
 					}
 				}
 			}
-			staticQuadTree.OperateOnContents(
+			gameWorld.OperateOnStaticTree(
 				[&](std::list<QuadTreeEntry<GameObject*>>& staticData, const Vector2& staticPos, const Vector2& staticSize) {
 					CollisionDetection::CollisionInfo collisionInfo{};
 					for (auto i = data.begin(); i != data.end(); i++) {
@@ -356,7 +319,7 @@ void PhysicsSystem::BroadPhase() {
 							}
 						}
 					}
-				}, subsetPos, subsetSize
+				}, &subsetPos, &subsetSize
 			);
 		}
 	);

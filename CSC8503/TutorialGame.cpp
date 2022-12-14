@@ -63,7 +63,7 @@ void TutorialGame::InitWorld(InitMode mode) {
 	InitGameExamples();
 	InitDefaultFloor();
 
-	physics->UpdateStaticTree();
+	world->UpdateStaticTree();
 
 	selectionObject = nullptr;
 
