@@ -142,7 +142,8 @@ void PlayerObject::HandleGoatActions(float dt) {
 
 	if (grappledObject) {
 		Vector3 toungePosition = transform.GetPosition() + transform.GetOrientation() * toungePos;
-		Vector3 delta = grappledObject->GetTransform().GetPosition() - toungePosition;
+		Vector3 contactPosition = grappledObject->GetTransform().GetPosition() + toungeContactPoint;
+		Vector3 delta = contactPosition - toungePosition;
 		Vector3 deltaNorm = delta.Normalised();
 		float distance = delta.Length();
 		static const float as = std::sin(3.14159 * 0.25), ac = std::cos(3.14159 * 0.25);
@@ -160,7 +161,8 @@ void PlayerObject::HandleGoatActions(float dt) {
 			Ray r = Ray(transform.GetPosition() + toungePos, transform.GetOrientation() * Vector3(0, 0, -1), CollisionLayer::Player);
 			if (gameWorld.Raycast(r, collision, true, this) && collision.rayDistance <= toungeMaxDistance) {
 				grappledObject = (GameObject*)collision.node;
-				grappleConstraint = new PositionConstraint(this, grappledObject, 0, toungeMaxDistance);
+				toungeContactPoint = collision.collidedAt - grappledObject->GetTransform().GetPosition();
+				grappleConstraint = new PositionConstraint(this, grappledObject, 0, toungeMaxDistance, Vector3(0), toungeContactPoint);
 				gameWorld.AddConstraint(grappleConstraint);
 				tounge->SetActive(true);
 			}

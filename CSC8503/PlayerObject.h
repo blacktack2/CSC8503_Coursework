@@ -41,6 +41,7 @@ namespace NCL {
 
 			float toungeMaxDistance = 10.0f;
 			const Vector3 toungePos = Vector3(0.0f, 0.8f, -1.0f);
+			Vector3 toungeContactPoint = Vector3(0);
 
 			const Vector3 eyePosL = Vector3(-0.1f, 0.9f, -1.0f);
 			const Vector3 eyePosR = Vector3( 0.1f, 0.9f, -1.0f);
