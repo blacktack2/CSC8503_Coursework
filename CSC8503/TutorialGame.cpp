@@ -2,6 +2,7 @@
 #include "Debug.h"
 #include "Bullet.h"
 #include "GameWorld.h"
+#include "Maze.h"
 #include "OrientationConstraint.h"
 #include "PhysicsObject.h"
 #include "PlayerObject.h"
@@ -44,14 +45,19 @@ TutorialGame::~TutorialGame() {
 	delete renderer;
 	delete world;
 
+	delete[] mazes;
+
 	delete bulletPrefab;
 }
 
 void TutorialGame::InitWorld(InitMode mode) {
+	delete[] mazes;
+	mazes = nullptr;
 	world->ClearAndErase();
 	physics->Clear();
 
 	switch (mode) {
+	case InitMode::MAZE             : InitMazeWorld(20, 20, 20.0f)                             ; break;
 	case InitMode::MIXED_GRID       : InitMixedGridWorld(15, 15, 3.5f, 3.5f)                  ; break;
 	case InitMode::CUBE_GRID        : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1), true) ; break;
 	case InitMode::OBB_GRID         : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1), false); break;
@@ -178,7 +184,7 @@ void TutorialGame::InitialisePrefabs() {
 
 void TutorialGame::InitCamera() {
 	world->GetMainCamera()->SetNearPlane(0.1f);
-	world->GetMainCamera()->SetFarPlane(500.0f);
+	world->GetMainCamera()->SetFarPlane(1000.0f);
 	world->GetMainCamera()->SetPitch(-15.0f);
 	world->GetMainCamera()->SetYaw(315.0f);
 	world->GetMainCamera()->SetPosition(Vector3(-60, 40, 60));
@@ -236,10 +242,31 @@ void TutorialGame::UpdateKeys() {
 }
 
 void TutorialGame::InitGameExamples() {
-	AddPlayerToWorld(Vector3(0, 5, 0));
+	//AddPlayerToWorld(Vector3(0, 5, 0));
 	AddEnemyToWorld(Vector3(5, 5, 0));
 	AddBonusToWorld(Vector3(10, 5, 0));
-	AddTriggerToWorld(Vector3(20, 5, 0), 10);
+}
+
+void TutorialGame::InitMazeWorld(int numRows, int numCols, float size) {
+	mazes = new Maze[1]{ Maze(*world, size, 100.0f, numRows, numCols, Vector3(0, 0, 0)) };
+
+	NavigationGrid& nav = mazes[0].GetNavGrid();
+
+	NavigationPath outPath;
+
+	Vector3 startPos(0, 0, 0);
+	Vector3 endPos(60, 0, 100);
+	bool found;
+	while (!(found = nav.FindPath(startPos, endPos, outPath)) && endPos.z < 200) {
+		endPos += Vector3(0, 0, 5);
+	}
+
+	Vector3 lastPos = startPos;
+	Vector3 pos;
+	while (outPath.PopWaypoint(pos)) {
+		Debug::DrawLine(lastPos, pos, Vector4(0, 1, 1, 1), 100);
+		lastPos = pos;
+	}
 }
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
@@ -314,7 +341,7 @@ void TutorialGame::InitDefaultFloor() {
 GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
 	GameObject* floor = new GameObject(*world);
 
-	Vector3 floorSize = Vector3(200, 2, 200);
+	Vector3 floorSize = Vector3(500, 2, 500);
 	AABBVolume* volume = new AABBVolume(floorSize);
 	floor->SetBoundingVolume((CollisionVolume*)volume);
 	floor->GetTransform()
@@ -442,6 +469,8 @@ GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, bool cameraF
 
 	character->SetRenderObject(new RenderObject(&character->GetTransform(), charMesh, nullptr, basicShader));
 	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
+
+	character->GetRenderObject()->SetColour(Vector4(1, 0.9f, 0.8f, 1));
 
 	character->GetPhysicsObject()->SetInverseMass(1);
 	character->GetPhysicsObject()->InitSphereInertia();

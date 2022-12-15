@@ -10,10 +10,12 @@
 namespace NCL {
 	namespace CSC8503 {
 		class Bullet;
+		class Maze;
 
 		class TutorialGame {
 		public:
 			enum class InitMode {
+				MAZE,
 				MIXED_GRID,
 				CUBE_GRID,
 				OBB_GRID,
@@ -26,7 +28,7 @@ namespace NCL {
 			TutorialGame();
 			~TutorialGame();
 
-			void InitWorld(InitMode mode = InitMode::MIXED_GRID);
+			void InitWorld(InitMode mode = InitMode::MAZE);
 
 			virtual void UpdateGame(float dt);
 		protected:
@@ -38,6 +40,7 @@ namespace NCL {
 
 			void InitGameExamples();
 
+			void InitMazeWorld(int numRows, int numCols, float size);
 			void InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing);
 			void InitCubeGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, const Vector3& cubeDims, bool axisAligned = true);
 			void InitSphereGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing, float radius);
@@ -72,6 +75,8 @@ namespace NCL {
 			bool inSelectionMode;
 
 			float		forceMagnitude;
+
+			Maze* mazes = nullptr;
 
 			GameObject* selectionObject = nullptr;
 

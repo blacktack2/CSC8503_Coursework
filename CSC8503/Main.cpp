@@ -334,7 +334,7 @@ hide or show the
 int main() {
 	//TestStateMachine();
 	//TestBehaviourTree();
-	TestPathfinding();
+	//TestPathfinding();
 	//TestNetworking();
 
 	Window* w = Window::CreateGameWindow("CSC8503 Game technology!", 1280, 720);
@@ -370,7 +370,7 @@ int main() {
 		w->SetTitle("Gametech frame time:" + std::to_string(1000.0f * dt));
 
 		g->UpdateGame(dt);
-		DisplayPathfinding();
+		//DisplayPathfinding();
 	}
 	Window::DestroyGameWindow();
 }

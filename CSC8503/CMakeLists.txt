@@ -6,6 +6,7 @@ set(PROJECT_NAME CSC8503)
 set(Header_Files
 	"Bullet.h"
     "GameTechRenderer.h"
+	"Maze.h"
     "NetworkedGame.h"
     "NetworkPlayer.h"
 	"PlayerObject.h"
@@ -18,6 +19,7 @@ set(Source_Files
 	"Bullet.cpp"
     "GameTechRenderer.cpp"
     "Main.cpp"
+	"Maze.cpp"
     "NetworkedGame.cpp"
     "NetworkPlayer.cpp"
 	"PlayerObject.cpp"
