@@ -456,7 +456,9 @@ ones in the next 'game' frame.
 void PhysicsSystem::ClearForces() {
 	gameWorld.OperateOnContents(
 		[](GameObject* o) {
-			o->GetPhysicsObject()->ClearForces();
+			if (o->GetPhysicsObject()) {
+				o->GetPhysicsObject()->ClearForces();
+			}
 		}
 	);
 }

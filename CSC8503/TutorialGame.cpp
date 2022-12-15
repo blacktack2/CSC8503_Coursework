@@ -1,3 +1,4 @@
+#include "AssetLibrary.h"
 #include "Debug.h"
 #include "Bullet.h"
 #include "GameWorld.h"
@@ -133,15 +134,24 @@ void TutorialGame::UpdateGame(float dt) {
 }
 
 void TutorialGame::InitialiseAssets() {
-	cubeMesh	= renderer->LoadMesh("cube.msh");
-	sphereMesh	= renderer->LoadMesh("sphere.msh");
-	charMesh	= renderer->LoadMesh("goat.msh");
-	enemyMesh	= renderer->LoadMesh("Keeper.msh");
-	bonusMesh	= renderer->LoadMesh("apple.msh");
+	cubeMesh    = renderer->LoadMesh("cube.msh");
+	sphereMesh  = renderer->LoadMesh("sphere.msh");
+	charMesh    = renderer->LoadMesh("goat.msh");
+	enemyMesh   = renderer->LoadMesh("Keeper.msh");
+	bonusMesh   = renderer->LoadMesh("apple.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
+	AssetLibrary::AddMesh("cube", cubeMesh);
+	AssetLibrary::AddMesh("sphere", sphereMesh);
+	AssetLibrary::AddMesh("cube", charMesh);
+	AssetLibrary::AddMesh("enemy", enemyMesh);
+	AssetLibrary::AddMesh("bonus", bonusMesh);
+	AssetLibrary::AddMesh("capsule", capsuleMesh);
 
-	basicTex	= renderer->LoadTexture("checkerboard.png");
+	basicTex = renderer->LoadTexture("checkerboard.png");
+	AssetLibrary::AddTexture("basic", basicTex);
+
 	basicShader = renderer->LoadShader("scene.vert", "scene.frag");
+	AssetLibrary::AddShader("basic", basicShader);
 
 	InitialisePrefabs();
 }
@@ -162,6 +172,8 @@ void TutorialGame::InitialisePrefabs() {
 	bulletPrefab->GetPhysicsObject()->SetInverseMass(1.0f);
 	bulletPrefab->GetPhysicsObject()->SetGravWeight(0.1f);
 	bulletPrefab->GetPhysicsObject()->InitCapsuleInertia();
+
+	AssetLibrary::AddPrefab("bullet", bulletPrefab);
 }
 
 void TutorialGame::InitCamera() {
@@ -284,7 +296,7 @@ void TutorialGame::InitBridgeConstraintTestWorld(int numLinks, float cubeDistanc
 
 	for (int i = 1; i <= numLinks; i++) {
 		GameObject* block = isOrientation ? AddSphereToWorld(startPos + Vector3(i * cubeDistance, 0, invMass), size.x, invMass) : AddCubeToWorld(startPos + Vector3(i * cubeDistance, 0, 0), size, invMass);
-		world->AddConstraint(new PositionConstraint(previous, block, maxDistance));
+		world->AddConstraint(new PositionConstraint(previous, block, maxDistance, maxDistance));
 		if (isOrientation)
 			world->AddConstraint(new OrientationConstraint(previous, block));
 
@@ -292,7 +304,7 @@ void TutorialGame::InitBridgeConstraintTestWorld(int numLinks, float cubeDistanc
 	}
 
 	GameObject* end = isOrientation ? AddSphereToWorld(startPos + Vector3((numLinks + 1) * cubeDistance, 0, 0), size.x, 0) : AddCubeToWorld(startPos + Vector3((numLinks + 1) * cubeDistance, 0, 0), size, 0);
-	world->AddConstraint(new PositionConstraint(previous, end, maxDistance));
+	world->AddConstraint(new PositionConstraint(previous, end, maxDistance, maxDistance));
 }
 
 void TutorialGame::InitDefaultFloor() {
@@ -419,7 +431,7 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, bool cameraFollow) {
 	static int id = 0;
 
-	PlayerObject* character = new PlayerObject(*world, id++, *bulletPrefab);
+	PlayerObject* character = new PlayerObject(*world, id++);
 	SphereVolume* volume = new SphereVolume(1.0f, CollisionLayer::Player);
 
 	character->SetBoundingVolume((CollisionVolume*)volume);

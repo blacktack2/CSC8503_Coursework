@@ -1,5 +1,6 @@
 #include "PlayerObject.h"
 
+#include "AssetLibrary.h"
 #include "Bullet.h"
 #include "Constraint.h"
 #include "GameWorld.h"
@@ -15,8 +16,8 @@
 using namespace NCL;
 using namespace CSC8503;
 
-PlayerObject::PlayerObject(GameWorld& gameWorld, int id, Bullet& bulletPrefab) : GameObject(gameWorld),
-id(id), bulletPrefab(bulletPrefab), behaviourRoot(std::string("Root-Player").append(std::to_string(id))), groundAirSelector(std::string("GroundAir-Player").append(std::to_string(id))) {
+PlayerObject::PlayerObject(GameWorld& gameWorld, int id) : GameObject(gameWorld),
+id(id), behaviourRoot(std::string("Root-Player").append(std::to_string(id))), groundAirSelector(std::string("GroundAir-Player").append(std::to_string(id))) {
 	groundTrigger = new GameObject(gameWorld, std::string("GroundTrigger-Player").append(std::to_string(id)));
 	groundTrigger->GetTransform().SetScale(Vector3(0.1f));
 	groundTrigger->SetBoundingVolume((CollisionVolume*)new AABBVolume(Vector3(0.1f), CollisionLayer::PlayerTrig));
@@ -27,6 +28,13 @@ id(id), bulletPrefab(bulletPrefab), behaviourRoot(std::string("Root-Player").app
 	groundTrigger->OnTriggerBeginCallback = [&](GameObject* other) { groundTriggerOverlaps++; };
 	groundTrigger->OnTriggerEndCallback = [&](GameObject* other) { groundTriggerOverlaps--; };
 	gameWorld.AddGameObject(groundTrigger);
+
+	tounge = new GameObject(gameWorld, std::string("Tounge-Player").append(std::to_string(id)));
+	tounge->GetTransform().SetScale(Vector3(0.1f, 1.0f, 0.1f));
+	tounge->SetRenderObject(new RenderObject(&tounge->GetTransform(), AssetLibrary::GetMesh("cube"), nullptr, AssetLibrary::GetShader("basic")));
+	tounge->GetRenderObject()->SetColour(Vector4(1, 0.8f, 0.8f, 1));
+	tounge->SetActive(false);
+	gameWorld.AddGameObject(tounge);
 
 	groundOrientationConstraint = new OrientationConstraint(this, Vector3(0, 1, 0));
 
@@ -125,20 +133,47 @@ void PlayerObject::HandleGroundInput(float dt) {
 
 void PlayerObject::HandleGoatActions(float dt) {
 	laserDelay -= dt;
-	if (laserDelay < 0 && Window::GetKeyboard()->KeyDown(KeyboardKeys::E)) {
+	if (laserDelay < 0 && Window::GetKeyboard()->KeyDown(KeyboardKeys::R)) {
 		laserDelay = laserFireRate;
 		FireLasers();
+	}
+
+	if (grappledObject) {
+		Vector3 toungePosition = transform.GetPosition() + transform.GetOrientation() * toungePos;
+		Vector3 delta = grappledObject->GetTransform().GetPosition() - toungePosition;
+		Vector3 deltaNorm = delta.Normalised();
+		float distance = delta.Length();
+		static const float as = std::sin(3.14159 * 0.25), ac = std::cos(3.14159 * 0.25);
+		tounge->GetTransform().SetPosition(toungePosition + delta * 0.5f)
+			                  .SetOrientation(Quaternion(Vector3::Cross(deltaNorm, Vector3(0, 1, 0)) * as, ac))
+			                  .SetScale(Vector3(0.1f, distance, 0.1f));
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::E)) { // Release grappled object
+			gameWorld.RemoveConstraint(grappleConstraint, true);
+			grappledObject = nullptr;
+			tounge->SetActive(false);
+		}
+	} else {
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::E)) { // Grapple a new object
+			RayCollision collision;
+			Ray r = Ray(transform.GetPosition() + toungePos, transform.GetOrientation() * Vector3(0, 0, -1), CollisionLayer::Player);
+			if (gameWorld.Raycast(r, collision, true, this) && collision.rayDistance <= toungeMaxDistance) {
+				grappledObject = (GameObject*)collision.node;
+				grappleConstraint = new PositionConstraint(this, grappledObject, 0, toungeMaxDistance);
+				gameWorld.AddConstraint(grappleConstraint);
+				tounge->SetActive(true);
+			}
+		}
 	}
 }
 
 void PlayerObject::FireLasers() {
-	Bullet* laserA = new Bullet(bulletPrefab);
+	Bullet* laserA = new Bullet(gameWorld, *(Bullet*)AssetLibrary::GetPrefab("bullet"));
 	laserA->SetLifespan(laserLifespan);
 	laserA->GetTransform().SetPosition(transform.GetOrientation() * eyePosL + transform.GetPosition());
 	laserA->GetPhysicsObject()->AddForce(transform.GetOrientation() * laserForce);
 	gameWorld.AddGameObject(laserA);
 
-	Bullet* laserB = new Bullet(bulletPrefab);
+	Bullet* laserB = new Bullet(gameWorld, *(Bullet*)AssetLibrary::GetPrefab("bullet"));
 	laserB->SetLifespan(laserLifespan);
 	laserB->GetTransform().SetPosition(transform.GetOrientation() * eyePosR + transform.GetPosition());
 	laserB->GetPhysicsObject()->AddForce(transform.GetOrientation() * laserForce);

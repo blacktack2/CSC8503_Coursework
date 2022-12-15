@@ -9,11 +9,12 @@
 namespace NCL {
 	namespace CSC8503 {
 		class Bullet;
-		class Constraint;
+		class OrientationConstraint;
+		class PositionConstraint;
 
 		class PlayerObject : public GameObject {
 		public:
-			PlayerObject(GameWorld& gameWorld, int id, Bullet& bulletPrefab);
+			PlayerObject(GameWorld& gameWorld, int id);
 			~PlayerObject();
 
 			virtual void Update(float dt) override;
@@ -27,14 +28,19 @@ namespace NCL {
 
 			void FireLasers();
 
-			Bullet& bulletPrefab;
-
 			GameObject* groundTrigger;
+			GameObject* tounge;
 
-			Constraint* groundOrientationConstraint;
+			GameObject* grappledObject = nullptr;
+
+			OrientationConstraint* groundOrientationConstraint;
+			PositionConstraint* grappleConstraint = nullptr;
 
 			int groundTriggerOverlaps = 0;
 			bool isGrounded = false;
+
+			float toungeMaxDistance = 10.0f;
+			const Vector3 toungePos = Vector3(0.0f, 0.8f, -1.0f);
 
 			const Vector3 eyePosL = Vector3(-0.1f, 0.9f, -1.0f);
 			const Vector3 eyePosR = Vector3( 0.1f, 0.9f, -1.0f);

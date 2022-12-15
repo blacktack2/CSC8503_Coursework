@@ -111,7 +111,7 @@ void GameWorld::UpdateStaticTree() {
 	);
 
 	for (auto i = gameObjects.begin(); i != gameObjects.end(); i++) {
-		if ((*i)->GetPhysicsObject()->IsStatic()) {
+		if ((*i)->GetPhysicsObject() && (*i)->GetPhysicsObject()->IsStatic()) {
 			Vector3 halfSizes;
 			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
 				continue;
@@ -126,7 +126,7 @@ void GameWorld::UpdateDynamicTree() {
 	dynamicQuadTree.Clear();
 
 	for (auto i = gameObjects.begin(); i != gameObjects.end(); i++) {
-		if (!(*i)->GetPhysicsObject()->IsStatic()) {
+		if ((*i)->GetPhysicsObject() && !(*i)->GetPhysicsObject()->IsStatic()) {
 			Vector3 halfSizes;
 			if (!(*i)->GetBroadphaseAABB(halfSizes)) {
 				continue;
@@ -169,7 +169,7 @@ bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObje
 					if (!closestObject) {
 						closestCollision = newCollision;
 						closestCollision.node = go;
-						return true;
+						return;
 					} else if (newCollision.rayDistance < collision.rayDistance) {
 						newCollision.node = go;
 						collision = newCollision;
@@ -179,31 +179,33 @@ bool GameWorld::Raycast(Ray& r, RayCollision& closestCollision, bool closestObje
 		}, r
 	);
 
-	staticQuadTree.OperateOnContents(
-		[&](std::list<QuadTreeEntry<GameObject*>>& data, const Vector2& staticPos, const Vector2& staticSize) {
-			for (auto i : data) {
-				GameObject* go = i.object;
-				if (!go->GetBoundingVolume() || go == ignoreThis) {
-					continue;
-				}
-				RayCollision newCollision;
-				if (CollisionDetection::RayIntersection(r, *go, newCollision)) {
-					if (!closestObject) {
-						closestCollision = newCollision;
-						closestCollision.node = go;
-						return true;
-					} else if (newCollision.rayDistance < collision.rayDistance) {
-						newCollision.node = go;
-						collision = newCollision;
+	if (closestObject || collision.node == nullptr) {
+		staticQuadTree.OperateOnContents(
+			[&](std::list<QuadTreeEntry<GameObject*>>& data, const Vector2& staticPos, const Vector2& staticSize) {
+				for (auto i : data) {
+					GameObject* go = i.object;
+					if (!go->GetBoundingVolume() || go == ignoreThis) {
+						continue;
+					}
+					RayCollision newCollision;
+					if (CollisionDetection::RayIntersection(r, *go, newCollision)) {
+						if (!closestObject) {
+							closestCollision = newCollision;
+							closestCollision.node = go;
+							return;
+						} else if (newCollision.rayDistance < collision.rayDistance) {
+							newCollision.node = go;
+							collision = newCollision;
+						}
 					}
 				}
-			}
-		}, r
-	);
+			}, r
+		);
+	}
 
 	if (collision.node) {
-		closestCollision		= collision;
-		closestCollision.node	= collision.node;
+		closestCollision      = collision;
+		closestCollision.node = collision.node;
 		return true;
 	}
 	return false;

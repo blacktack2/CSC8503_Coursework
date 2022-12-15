@@ -8,10 +8,11 @@ using namespace NCL;
 using namespace Maths;
 using namespace CSC8503;
 
-PositionConstraint::PositionConstraint(GameObject* a, GameObject* b, float d) {
+PositionConstraint::PositionConstraint(GameObject* a, GameObject* b, float minD, float maxD) {
 	objectA  = a;
 	objectB  = b;
-	distance = d;
+	minDistance = minD;
+	maxDistance = maxD;
 
 	currentAction = &PositionConstraint::UpdateDistanced;
 }
@@ -37,7 +38,15 @@ void PositionConstraint::UpdateConstraint(float dt)	{
 void PositionConstraint::UpdateDistanced(float dt) {
 	Vector3 relativePos = objectA->GetTransform().GetPosition() - objectB->GetTransform().GetPosition();
 	float currentDistance = relativePos.Length();
-	float offset = distance - currentDistance;
+
+	float offset;
+	if (currentDistance > maxDistance) {
+		offset = maxDistance - currentDistance;
+	} else if (currentDistance < minDistance) {
+		offset = minDistance - currentDistance;
+	} else {
+		return;
+	}
 
 	if (std::abs(offset) > 0.0f) {
 		Vector3 offsetDir = relativePos / currentDistance;

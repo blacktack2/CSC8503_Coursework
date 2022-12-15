@@ -36,6 +36,10 @@ namespace NCL::CSC8503 {
 			return isActive;
 		}
 
+		void SetActive(bool active = true) {
+			isActive = active;
+		}
+
 		Transform& GetTransform() {
 			return transform;
 		}
@@ -109,10 +113,10 @@ namespace NCL::CSC8503 {
 
 		Transform transform;
 
-		CollisionVolume* boundingVolume;
-		PhysicsObject*   physicsObject;
-		RenderObject*    renderObject;
-		NetworkObject*   networkObject;
+		CollisionVolume* boundingVolume = nullptr;
+		PhysicsObject*   physicsObject = nullptr;
+		RenderObject*    renderObject = nullptr;
+		NetworkObject*   networkObject = nullptr;
 
 		bool isActive;
 		int  worldID;
