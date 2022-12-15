@@ -98,6 +98,8 @@ PlayerObject::~PlayerObject() {
 }
 
 void PlayerObject::Update(float dt) {
+	transform.SetPosition(Vector3(transform.GetPosition().x, std::max(1.0f, transform.GetPosition().y), transform.GetPosition().z));
+
 	groundTrigger->GetTransform().SetPosition(transform.GetPosition() + Vector3(0, -1, 0));
 	behaviourRoot.Reset();
 	while (behaviourRoot.Execute(dt) == Ongoing) {}

@@ -56,15 +56,16 @@ void TutorialGame::InitWorld(InitMode mode) {
 	world->ClearAndErase();
 	physics->Clear();
 
+	player = AddPlayerToWorld(Vector3(0, 0, 0));
 	switch (mode) {
-	case InitMode::MAZE             : InitMazeWorld(20, 20, 20.0f)                             ; break;
-	case InitMode::MIXED_GRID       : InitMixedGridWorld(15, 15, 3.5f, 3.5f)                  ; break;
-	case InitMode::CUBE_GRID        : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1), true) ; break;
-	case InitMode::OBB_GRID         : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1), false); break;
-	case InitMode::SPHERE_GRID      : InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f)           ; break;
-	case InitMode::BRIDGE_TEST      : InitBridgeConstraintTestWorld(10, 20, 30, false)        ; break;
-	case InitMode::BRIDGE_TEST_ANG  : InitBridgeConstraintTestWorld(10, 20, 30, true)         ; break;
-	case InitMode::PERFORMANCE_TEST : InitMixedGridWorld(30, 30, 10.0f, 10.0f)                ; break;
+		case InitMode::MAZE             : InitMazeWorld(20, 20, 20.0f)                            ; break;
+		case InitMode::MIXED_GRID       : InitMixedGridWorld(15, 15, 3.5f, 3.5f)                  ; break;
+		case InitMode::CUBE_GRID        : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1), true) ; break;
+		case InitMode::OBB_GRID         : InitCubeGridWorld(15, 15, 3.5f, 3.5f, Vector3(1), false); break;
+		case InitMode::SPHERE_GRID      : InitSphereGridWorld(15, 15, 3.5f, 3.5f, 1.0f)           ; break;
+		case InitMode::BRIDGE_TEST      : InitBridgeConstraintTestWorld(10, 20, 30, false)        ; break;
+		case InitMode::BRIDGE_TEST_ANG  : InitBridgeConstraintTestWorld(10, 20, 30, true)         ; break;
+		case InitMode::PERFORMANCE_TEST : InitMixedGridWorld(30, 30, 10.0f, 10.0f)                ; break;
 	}
 
 	InitGameExamples();
@@ -129,6 +130,8 @@ void TutorialGame::UpdateGame(float dt) {
 	SelectObject();
 	MoveSelectedObject();
 
+	world->PreUpdateWorld();
+
 	world->UpdateWorld(dt);
 	renderer->Update(dt);
 	physics->Update(dt);
@@ -143,7 +146,7 @@ void TutorialGame::InitialiseAssets() {
 	cubeMesh    = renderer->LoadMesh("cube.msh");
 	sphereMesh  = renderer->LoadMesh("sphere.msh");
 	charMesh    = renderer->LoadMesh("goat.msh");
-	enemyMesh   = renderer->LoadMesh("Keeper.msh");
+	enemyMesh   = renderer->LoadMesh("goose.msh");
 	bonusMesh   = renderer->LoadMesh("apple.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
 	AssetLibrary::AddMesh("cube", cubeMesh);
@@ -242,9 +245,6 @@ void TutorialGame::UpdateKeys() {
 }
 
 void TutorialGame::InitGameExamples() {
-	//AddPlayerToWorld(Vector3(0, 5, 0));
-	AddEnemyToWorld(Vector3(5, 5, 0));
-	AddBonusToWorld(Vector3(10, 5, 0));
 }
 
 void TutorialGame::InitMazeWorld(int numRows, int numCols, float size) {
@@ -252,21 +252,9 @@ void TutorialGame::InitMazeWorld(int numRows, int numCols, float size) {
 
 	NavigationGrid& nav = mazes[0].GetNavGrid();
 
-	NavigationPath outPath;
-
-	Vector3 startPos(0, 0, 0);
-	Vector3 endPos(60, 0, 100);
-	bool found;
-	while (!(found = nav.FindPath(startPos, endPos, outPath)) && endPos.z < 200) {
-		endPos += Vector3(0, 0, 5);
-	}
-
-	Vector3 lastPos = startPos;
-	Vector3 pos;
-	while (outPath.PopWaypoint(pos)) {
-		Debug::DrawLine(lastPos, pos, Vector4(0, 1, 1, 1), 100);
-		lastPos = pos;
-	}
+	Vector3 position;
+	while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 5, (rand() % 400) - 200))) {}
+	AddEnemyToWorld(position, nav);
 }
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
@@ -335,7 +323,7 @@ void TutorialGame::InitBridgeConstraintTestWorld(int numLinks, float cubeDistanc
 }
 
 void TutorialGame::InitDefaultFloor() {
-	AddFloorToWorld(Vector3(0, 0, 0));
+	AddFloorToWorld(Vector3(0, -2, 0));
 }
 
 GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
@@ -455,7 +443,7 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 	return sgo;
 }
 
-GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, bool cameraFollow) {
+PlayerObject* TutorialGame::AddPlayerToWorld(const Vector3& position, bool cameraFollow) {
 	static int id = 0;
 
 	PlayerObject* character = new PlayerObject(*world, id++);
@@ -484,28 +472,27 @@ GameObject* TutorialGame::AddPlayerToWorld(const Vector3& position, bool cameraF
 	return character;
 }
 
-GameObject* TutorialGame::AddEnemyToWorld(const Vector3& position) {
-	float meshSize		= 3.0f;
-	float inverseMass	= 0.5f;
+EnemyObject* TutorialGame::AddEnemyToWorld(const Vector3& position, NavigationMap& navMap) {
+	EnemyObject* enemy = new EnemyObject(*world, *player, navMap);
+	SphereVolume* volume = new SphereVolume(1.0f, CollisionLayer::Enemy);
 
-	GameObject* character = new GameObject(*world);
+	enemy->SetBoundingVolume((CollisionVolume*)volume);
 
-	AABBVolume* volume = new AABBVolume(Vector3(0.3f, 0.9f, 0.3f) * meshSize, CollisionLayer::Enemy);
-	character->SetBoundingVolume((CollisionVolume*)volume);
-
-	character->GetTransform()
-		.SetScale(Vector3(meshSize, meshSize, meshSize))
+	enemy->GetTransform()
+		.SetScale(Vector3(1.0f))
 		.SetPosition(position);
 
-	character->SetRenderObject(new RenderObject(&character->GetTransform(), enemyMesh, nullptr, basicShader));
-	character->SetPhysicsObject(new PhysicsObject(&character->GetTransform(), character->GetBoundingVolume()));
+	enemy->SetRenderObject(new RenderObject(&enemy->GetTransform(), enemyMesh, nullptr, basicShader));
+	enemy->SetPhysicsObject(new PhysicsObject(&enemy->GetTransform(), enemy->GetBoundingVolume()));
 
-	character->GetPhysicsObject()->SetInverseMass(inverseMass);
-	character->GetPhysicsObject()->InitSphereInertia();
+	enemy->GetRenderObject()->SetColour(Vector4(1, 0.9f, 0.8f, 1));
 
-	world->AddGameObject(character);
+	enemy->GetPhysicsObject()->SetInverseMass(1);
+	enemy->GetPhysicsObject()->InitSphereInertia();
 
-	return character;
+	world->AddGameObject(enemy);
+
+	return enemy;
 }
 
 GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {

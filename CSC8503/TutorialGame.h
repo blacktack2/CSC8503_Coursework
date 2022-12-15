@@ -1,10 +1,11 @@
 #pragma once
+#include "EnemyObject.h"
 #include "GameTechRenderer.h"
 #ifdef USEVULKAN
 #include "GameTechVulkanRenderer.h"
 #endif
 #include "PhysicsSystem.h"
-
+#include "PlayerObject.h"
 #include "StateGameObject.h"
 
 namespace NCL {
@@ -54,8 +55,8 @@ namespace NCL {
 			GameObject* AddCapsuleToWorld(const Vector3& position, float halfHeight, float radius, float inverseMass = 10.0f);
 			StateGameObject* AddStateObjectToWorld(const Vector3& position);
 
-			GameObject* AddPlayerToWorld(const Vector3& position, bool cameraFollow = true);
-			GameObject* AddEnemyToWorld(const Vector3& position);
+			PlayerObject* AddPlayerToWorld(const Vector3& position, bool cameraFollow = true);
+			EnemyObject* AddEnemyToWorld(const Vector3& position, NavigationMap& navMap);
 			GameObject* AddBonusToWorld(const Vector3& position);
 			GameObject* AddTriggerToWorld(const Vector3& position, float size);
 
@@ -102,6 +103,8 @@ namespace NCL {
 			}
 
 			GameObject* objClosest = nullptr;
+
+			PlayerObject* player = nullptr;
 		};
 	}
 }

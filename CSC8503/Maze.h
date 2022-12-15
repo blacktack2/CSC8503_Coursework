@@ -11,6 +11,10 @@ namespace NCL {
 			NavigationGrid& GetNavGrid() {
 				return navGrid;
 			}
+
+			bool ValidPoint(const Vector3& position) {
+				return navGrid.GetAt(position) != GridNodeType::WALL;
+			}
 		private:
 			GameWorld& gameWorld;
 			NavigationGrid navGrid;

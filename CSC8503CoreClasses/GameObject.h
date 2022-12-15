@@ -77,7 +77,6 @@ namespace NCL::CSC8503 {
 		}
 
 		virtual void OnTriggerBegin(GameObject* otherObject) {
-			std::cout << name << " Triggered with " << otherObject->name << "\n";
 			if (OnTriggerBeginCallback) OnTriggerBeginCallback(otherObject);
 		}
 

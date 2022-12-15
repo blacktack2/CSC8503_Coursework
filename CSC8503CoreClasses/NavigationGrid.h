@@ -45,6 +45,12 @@ namespace NCL {
 			void UpdateConnections();
 
 			bool FindPath(const Vector3& from, const Vector3& to, NavigationPath& outPath) override;
+
+			GridNodeType GetAt(const Vector3& position) {
+				int px = ((int)position.x / nodeSize) - gridOffsetX;
+				int py = ((int)position.y / nodeSize) - gridOffsetY;
+				return allNodes[px + py * gridWidth].type;
+			}
 		protected:
 			bool      NodeInList(GridNode* n, std::vector<GridNode*>& list) const;
 			GridNode* RemoveBestNode(std::vector<GridNode*>& list) const;

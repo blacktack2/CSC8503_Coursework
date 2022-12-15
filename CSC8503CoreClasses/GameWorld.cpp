@@ -67,6 +67,19 @@ void GameWorld::OperateOnContents(GameObjectFunc f) {
 	}
 }
 
+void GameWorld::PreUpdateWorld() {
+	gameObjects.erase(std::remove_if(gameObjects.begin(), gameObjects.end(),
+		[](GameObject* o) {
+			if (o->IsMarkedDelete()) {
+				delete o;
+				return true;
+			}
+			return false;
+		}
+	), gameObjects.end());
+	UpdateDynamicTree();
+}
+
 void GameWorld::UpdateWorld(float dt) {
 	auto rng = std::default_random_engine{};
 
@@ -81,25 +94,15 @@ void GameWorld::UpdateWorld(float dt) {
 		std::shuffle(constraints.begin(), constraints.end(), e);
 	}
 
-	for (auto& go : gameObjects) {
-		go->Update(dt);
+	for (int i = 0; i < gameObjects.size(); i++) {
+		gameObjects[i]->Update(dt);
 	}
 
-	UpdateDynamicTree();
 	//dynamicQuadTree.DebugDraw();
 	//staticQuadTree.DebugDraw();
 }
 
 void GameWorld::PostUpdateWorld() {
-	gameObjects.erase(std::remove_if(gameObjects.begin(), gameObjects.end(),
-		[](GameObject* o) {
-			if (o->IsMarkedDelete()) {
-				delete o;
-				return true;
-			}
-			return false;
-		}
-	), gameObjects.end());
 }
 
 void GameWorld::UpdateStaticTree() {
