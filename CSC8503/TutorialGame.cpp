@@ -255,6 +255,17 @@ void TutorialGame::InitMazeWorld(int numRows, int numCols, float size) {
 	Vector3 position;
 	while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 5, (rand() % 400) - 200))) {}
 	AddEnemyToWorld(position, nav);
+
+	for (int i = 0; i < 100; i++) {
+		while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 1.5f, (rand() % 400) - 200))) {}
+		switch (rand() % 5) {
+			case 0: AddCubeToWorld(position, Vector3(2), 20.0f, true); break;
+			case 1: AddCubeToWorld(position, Vector3(1), 10.0f, false); break;
+			case 2: AddSphereToWorld(position, 1.5f); break;
+			case 3: AddCapsuleToWorld(position, 1.0f, 1.0f); break;
+			case 4: AddCubeToWorld(position, Vector3(1.5f), 0.0f, true); break;
+		}
+	}
 }
 
 void TutorialGame::InitMixedGridWorld(int numRows, int numCols, float rowSpacing, float colSpacing) {
