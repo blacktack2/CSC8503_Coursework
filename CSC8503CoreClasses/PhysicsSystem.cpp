@@ -237,6 +237,10 @@ void PhysicsSystem::ImpulseResolveCollision(GameObject& a, GameObject& b, Collis
 
 	float totalMass = physA->GetInverseMass() + physB->GetInverseMass();
 
+	if (physA->IsStatic() || physB->IsStatic()) {
+		transformA.GetPosition();
+	}
+
 	if (totalMass == 0) {
 		return;
 	}
@@ -381,6 +385,7 @@ void PhysicsSystem::IntegrateAccel(float dt) {
 		if (object == nullptr) {
 			continue;
 		}
+
 		float inverseMass = object->GetInverseMass();
 
 		Vector3 linearVel = object->GetLinearVelocity();
@@ -421,7 +426,7 @@ void PhysicsSystem::IntegrateVelocity(float dt) {
 
 	for (auto i = first; i != last; i++) {
 		PhysicsObject* object = (*i)->GetPhysicsObject();
-		if (object == nullptr) {
+		if (object == nullptr || object->IsStatic()) {
 			continue;
 		}
 		Transform& transform = (*i)->GetTransform();

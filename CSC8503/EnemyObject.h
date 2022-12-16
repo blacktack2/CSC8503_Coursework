@@ -103,13 +103,11 @@ namespace NCL {
 				if (waypoints.empty()) {
 					waypoints = enemy.GetRandomPatrolPoint();
 					nextPatrolPoint = waypoints.empty() ? Vector3() : waypoints[0];
-					std::cout << nextPatrolPoint << "\n";
 				} else if (enemy.SquareDistanceFrom(nextPatrolPoint) > 1.0f) {
 					enemy.MoveTo(nextPatrolPoint, patrolSpeed);
 				} else {
 					waypoints.erase(waypoints.begin());
 					nextPatrolPoint = waypoints.empty() ? Vector3() : waypoints[0];
-					std::cout << nextPatrolPoint << "\n";
 				}
 				Vector3 pos = nextPatrolPoint;
 				for (int i = 1; i < waypoints.size(); i++) {
@@ -121,8 +119,6 @@ namespace NCL {
 
 			void OnAwake() override {
 				std::cout << "A goose is patrolling!\n";
-				waypoints = enemy.GetRandomPatrolPoint();
-				nextPatrolPoint = waypoints.empty() ? Vector3() : waypoints[0];
 			}
 		private:
 			Vector3 nextPatrolPoint;

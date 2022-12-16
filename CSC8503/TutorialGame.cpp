@@ -147,6 +147,7 @@ void TutorialGame::InitialiseAssets() {
 	sphereMesh  = renderer->LoadMesh("sphere.msh");
 	charMesh    = renderer->LoadMesh("goat.msh");
 	enemyMesh   = renderer->LoadMesh("goose.msh");
+	npcMesh     = renderer->LoadMesh("Keeper.msh");
 	bonusMesh   = renderer->LoadMesh("apple.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
 	AssetLibrary::AddMesh("cube", cubeMesh);
@@ -196,24 +197,27 @@ void TutorialGame::InitCamera() {
 
 void TutorialGame::UpdateKeys() {
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
-		InitWorld(InitMode::MIXED_GRID);
+		InitWorld(InitMode::MAZE);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2)) {
-		InitWorld(InitMode::CUBE_GRID);
+		InitWorld(InitMode::MIXED_GRID);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3)) {
-		InitWorld(InitMode::OBB_GRID);
+		InitWorld(InitMode::CUBE_GRID);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F4)) {
-		InitWorld(InitMode::SPHERE_GRID);
+		InitWorld(InitMode::OBB_GRID);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) {
-		InitWorld(InitMode::BRIDGE_TEST);
+		InitWorld(InitMode::SPHERE_GRID);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F6)) {
-		InitWorld(InitMode::BRIDGE_TEST_ANG);
+		InitWorld(InitMode::BRIDGE_TEST);
 	}
 	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
+		InitWorld(InitMode::BRIDGE_TEST_ANG);
+	}
+	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
 		InitWorld(InitMode::PERFORMANCE_TEST);
 	}
 
@@ -255,6 +259,8 @@ void TutorialGame::InitMazeWorld(int numRows, int numCols, float size) {
 	Vector3 position;
 	while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 5, (rand() % 400) - 200))) {}
 	AddEnemyToWorld(position, nav);
+
+	AddNPCToWorld(Vector3(10, 5, 0));
 
 	for (int i = 0; i < 100; i++) {
 		while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 1.5f + rand() % 30, (rand() % 400) - 200))) {}
@@ -338,7 +344,7 @@ void TutorialGame::InitDefaultFloor() {
 }
 
 GameObject* TutorialGame::AddFloorToWorld(const Vector3& position) {
-	GameObject* floor = new GameObject(*world);
+	GameObject* floor = new GameObject(*world, "Floor");
 
 	Vector3 floorSize = Vector3(500, 2, 500);
 	AABBVolume* volume = new AABBVolume(floorSize);
@@ -504,6 +510,29 @@ EnemyObject* TutorialGame::AddEnemyToWorld(const Vector3& position, NavigationMa
 	world->AddGameObject(enemy);
 
 	return enemy;
+}
+
+NPCObject* TutorialGame::AddNPCToWorld(const Vector3& position) {
+	NPCObject* npc = new NPCObject(*world);
+	CapsuleVolume* volume = new CapsuleVolume(1.5f, 1.0f);
+
+	npc->SetBoundingVolume((CollisionVolume*)volume);
+
+	npc->GetTransform()
+		.SetScale(Vector3(2.0f))
+		.SetPosition(position);
+
+	npc->SetRenderObject(new RenderObject(&npc->GetTransform(), npcMesh, nullptr, basicShader));
+	npc->SetPhysicsObject(new PhysicsObject(&npc->GetTransform(), npc->GetBoundingVolume()));
+
+	npc->GetRenderObject()->SetColour(Vector4(1, 1, 0.8f, 1));
+
+	npc->GetPhysicsObject()->SetInverseMass(1);
+	npc->GetPhysicsObject()->InitCapsuleInertia();
+
+	world->AddGameObject(npc);
+
+	return npc;
 }
 
 GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {

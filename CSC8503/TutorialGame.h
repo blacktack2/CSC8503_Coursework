@@ -4,6 +4,7 @@
 #ifdef USEVULKAN
 #include "GameTechVulkanRenderer.h"
 #endif
+#include "NPCObject.h"
 #include "PhysicsSystem.h"
 #include "PlayerObject.h"
 #include "StateGameObject.h"
@@ -57,6 +58,7 @@ namespace NCL {
 
 			PlayerObject* AddPlayerToWorld(const Vector3& position, bool cameraFollow = true);
 			EnemyObject* AddEnemyToWorld(const Vector3& position, NavigationMap& navMap);
+			NPCObject* AddNPCToWorld(const Vector3& position);
 			GameObject* AddBonusToWorld(const Vector3& position);
 			GameObject* AddTriggerToWorld(const Vector3& position, float size);
 
@@ -82,16 +84,17 @@ namespace NCL {
 			GameObject* selectionObject = nullptr;
 
 			MeshGeometry*	capsuleMesh = nullptr;
-			MeshGeometry*	cubeMesh	= nullptr;
-			MeshGeometry*	sphereMesh	= nullptr;
+			MeshGeometry*	cubeMesh    = nullptr;
+			MeshGeometry*	sphereMesh  = nullptr;
 
-			TextureBase*	basicTex	= nullptr;
+			TextureBase*	basicTex    = nullptr;
 			ShaderBase*		basicShader = nullptr;
 
 			//Coursework Meshes
-			MeshGeometry*	charMesh	= nullptr;
-			MeshGeometry*	enemyMesh	= nullptr;
-			MeshGeometry*	bonusMesh	= nullptr;
+			MeshGeometry*	charMesh = nullptr;
+			MeshGeometry*	enemyMesh = nullptr;
+			MeshGeometry*	npcMesh	  = nullptr;
+			MeshGeometry*	bonusMesh = nullptr;
 
 			Bullet* bulletPrefab = nullptr;
 
