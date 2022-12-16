@@ -280,7 +280,7 @@ void TutorialGame::UpdateKeys() {
 			}
 			break;
 		case GameState::Lose:
-			Debug::Print("You Lose!", Vector2(5, 80), Vector4(1, 0, 0, 1));
+			Debug::Print("You got Goosed!", Vector2(5, 80), Vector4(1, 0, 0, 1));
 			Debug::Print("Press [Space] to play again", Vector2(5, 90), Vector4(1, 1, 1, 1));
 
 			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE)) {
