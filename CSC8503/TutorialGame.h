@@ -35,9 +35,17 @@ namespace NCL {
 			virtual void UpdateGame(float dt);
 
 			bool IsQuit() {
-				return quit;
+				return gameState == GameState::Quit;
 			}
 		protected:
+			enum class GameState {
+				OnGoing,
+				Paused,
+				Win,
+				Lose,
+				Quit,
+			};
+
 			void InitialiseAssets();
 			void InitialisePrefabs();
 
@@ -79,8 +87,7 @@ namespace NCL {
 			PhysicsSystem*		physics;
 			GameWorld*			world;
 
-			bool quit = false;
-			bool paused = false;
+			GameState gameState;
 			bool inSelectionMode;
 
 			float		forceMagnitude;

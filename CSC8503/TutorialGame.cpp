@@ -52,7 +52,7 @@ TutorialGame::~TutorialGame() {
 }
 
 void TutorialGame::InitWorld(InitMode mode) {
-	score = 0;
+	score = 1000;
 
 	delete[] mazes;
 	mazes = nullptr;
@@ -84,7 +84,7 @@ void TutorialGame::InitWorld(InitMode mode) {
 void TutorialGame::UpdateGame(float dt) {
 	UpdateKeys();
 
-	if (!paused) {
+	if (gameState == GameState::OnGoing) {
 		Vector2 screenSize = Window::GetWindow()->GetScreenSize();
 
 		Debug::Print(std::string("Score: ").append(std::to_string(score)), Vector2(5, 5), Vector4(1, 1, 0, 1));
@@ -145,6 +145,12 @@ void TutorialGame::UpdateGame(float dt) {
 		physics->Update(dt);
 
 		world->PostUpdateWorld();
+
+		if (score < 0) {
+			gameState = GameState::Lose;
+		} else if (score > 5000) {
+			gameState = GameState::Win;
+		}
 	}
 
 	renderer->Render();
@@ -205,19 +211,10 @@ void TutorialGame::InitCamera() {
 }
 
 void TutorialGame::UpdateKeys() {
-	if (paused) {
-		Debug::Print("Press [Escape] to resume", Vector2(5, 80), Vector4(1, 1, 1, 1));
-		Debug::Print("Press [q] to quit", Vector2(5, 90), Vector4(1, 1, 1, 1));
-
-		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
-			quit = true;
-		}
+	switch (gameState) {
+	case GameState::OnGoing: default:
 		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::ESCAPE)) {
-			paused = false;
-		}
-	} else {
-		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::ESCAPE)) {
-			paused = true;
+			gameState = GameState::Paused;
 		}
 
 		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
@@ -261,6 +258,36 @@ void TutorialGame::UpdateKeys() {
 		} else {
 			DebugObjectMovement();
 		}
+		break;
+		case GameState::Paused:
+			Debug::Print("Press [Escape] to resume", Vector2(5, 80), Vector4(1, 1, 1, 1));
+			Debug::Print("Press [q] to quit", Vector2(5, 90), Vector4(1, 1, 1, 1));
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
+				gameState = GameState::Quit;
+			}
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::ESCAPE)) {
+				gameState = GameState::OnGoing;
+			}
+			break;
+		case GameState::Win:
+			Debug::Print("You Win!", Vector2(5, 80), Vector4(0, 1, 0, 1));
+			Debug::Print("Press [Space] to play again", Vector2(5, 90), Vector4(1, 1, 1, 1));
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE)) {
+				InitWorld(InitMode::MAZE);
+				gameState = GameState::OnGoing;
+			}
+			break;
+		case GameState::Lose:
+			Debug::Print("You Lose!", Vector2(5, 80), Vector4(1, 0, 0, 1));
+			Debug::Print("Press [Space] to play again", Vector2(5, 90), Vector4(1, 1, 1, 1));
+
+			if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::SPACE)) {
+				InitWorld(InitMode::MAZE);
+				gameState = GameState::OnGoing;
+			}
+			break;
 	}
 }
 
