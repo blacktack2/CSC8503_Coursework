@@ -1,6 +1,7 @@
 #include "AssetLibrary.h"
-#include "Debug.h"
 #include "Bullet.h"
+#include "Bonus.h"
+#include "Debug.h"
 #include "GameWorld.h"
 #include "Maze.h"
 #include "OrientationConstraint.h"
@@ -51,6 +52,8 @@ TutorialGame::~TutorialGame() {
 }
 
 void TutorialGame::InitWorld(InitMode mode) {
+	score = 0;
+
 	delete[] mazes;
 	mazes = nullptr;
 	world->ClearAndErase();
@@ -80,6 +83,8 @@ void TutorialGame::InitWorld(InitMode mode) {
 
 void TutorialGame::UpdateGame(float dt) {
 	Vector2 screenSize = Window::GetWindow()->GetScreenSize();
+
+	Debug::Print(std::string("Score: ").append(std::to_string(score)), Vector2(5, 5), Vector4(1, 1, 0, 1));
 
 	if (!inSelectionMode) {
 		world->GetMainCamera()->UpdateCamera(dt);
@@ -150,7 +155,7 @@ void TutorialGame::InitialiseAssets() {
 	charMesh    = renderer->LoadMesh("goat.msh");
 	enemyMesh   = renderer->LoadMesh("goose.msh");
 	npcMesh     = renderer->LoadMesh("Keeper.msh");
-	bonusMesh   = renderer->LoadMesh("apple.msh");
+	bonusMesh   = renderer->LoadMesh("Sphere.msh");
 	capsuleMesh = renderer->LoadMesh("capsule.msh");
 	AssetLibrary::AddMesh("cube", cubeMesh);
 	AssetLibrary::AddMesh("sphere", sphereMesh);
@@ -261,6 +266,11 @@ void TutorialGame::InitMazeWorld(int numRows, int numCols, float size) {
 	Vector3 position;
 	while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 5, (rand() % 400) - 200))) {}
 	AddEnemyToWorld(position, nav);
+
+	for (int i = 0; i < 20; i++) {
+		while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 4, (rand() % 400) - 200))) {}
+		AddBonusToWorld(position);
+	}
 
 	for (int i = 0; i < 50; i++) {
 		while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 5, (rand() % 400) - 200))) {}
@@ -468,7 +478,7 @@ StateGameObject* TutorialGame::AddStateObjectToWorld(const Vector3& position) {
 PlayerObject* TutorialGame::AddPlayerToWorld(const Vector3& position, bool cameraFollow) {
 	static int id = 0;
 
-	PlayerObject* character = new PlayerObject(*world, id++);
+	PlayerObject* character = new PlayerObject(*world, id++, score);
 	SphereVolume* volume = new SphereVolume(1.0f, CollisionLayer::Player);
 
 	character->SetBoundingVolume((CollisionVolume*)volume);
@@ -541,23 +551,26 @@ NPCObject* TutorialGame::AddNPCToWorld(const Vector3& position) {
 }
 
 GameObject* TutorialGame::AddBonusToWorld(const Vector3& position) {
-	GameObject* apple = new GameObject(*world);
+	GameObject* bonus = new BonusObject(*world);
+	SphereVolume* volume = new SphereVolume(1.5f);
 
-	SphereVolume* volume = new SphereVolume(0.5f);
-	apple->SetBoundingVolume((CollisionVolume*)volume);
-	apple->GetTransform()
-		.SetScale(Vector3(2, 2, 2))
+	bonus->SetBoundingVolume((CollisionVolume*)volume);
+
+	bonus->GetTransform()
+		.SetScale(Vector3(1))
 		.SetPosition(position);
 
-	apple->SetRenderObject(new RenderObject(&apple->GetTransform(), bonusMesh, nullptr, basicShader));
-	apple->SetPhysicsObject(new PhysicsObject(&apple->GetTransform(), apple->GetBoundingVolume()));
+	bonus->SetRenderObject(new RenderObject(&bonus->GetTransform(), bonusMesh, nullptr, basicShader));
+	bonus->SetPhysicsObject(new PhysicsObject(&bonus->GetTransform(), bonus->GetBoundingVolume(), true));
 
-	apple->GetPhysicsObject()->SetInverseMass(1.0f);
-	apple->GetPhysicsObject()->InitSphereInertia();
+	bonus->GetRenderObject()->SetColour(Vector4(1, 0.2f, 0.2f, 1));
 
-	world->AddGameObject(apple);
+	bonus->GetPhysicsObject()->SetInverseMass(0.0f);
+	bonus->GetPhysicsObject()->InitSphereInertia();
 
-	return apple;
+	world->AddGameObject(bonus);
+
+	return bonus;
 }
 
 GameObject* TutorialGame::AddTriggerToWorld(const Vector3& position, float size) {

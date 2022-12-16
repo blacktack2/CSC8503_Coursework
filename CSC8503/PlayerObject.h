@@ -14,10 +14,14 @@ namespace NCL {
 
 		class PlayerObject : public GameObject {
 		public:
-			PlayerObject(GameWorld& gameWorld, int id);
+			PlayerObject(GameWorld& gameWorld, int id, int& scoreCounter);
 			~PlayerObject();
 
 			virtual void Update(float dt) override;
+
+			void AddPoints(int points);
+
+			void CollisionWith(GameObject* other);
 		protected:
 			int id;
 			BehaviourParallel behaviourRoot;
@@ -27,6 +31,10 @@ namespace NCL {
 			void HandleGoatActions(float dt);
 
 			void FireLasers();
+
+			int& scoreCounter;
+
+			std::set<int> collidedWith;
 
 			GameObject* groundTrigger;
 			GameObject* tounge;
@@ -50,6 +58,9 @@ namespace NCL {
 			float laserFireRate = 0.05f;
 			float laserDelay = 0.0f;
 			float laserLifespan = 1.0f;
+
+			float lastGoosed = 0.0f;
+			const float gooseDelay = 2.0f;
 		};
 	}
 }

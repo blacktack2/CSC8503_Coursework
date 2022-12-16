@@ -2,8 +2,10 @@
 
 #include "AssetLibrary.h"
 #include "Bullet.h"
+#include "Bonus.h"
 #include "Constraint.h"
 #include "GameWorld.h"
+#include "NPCObject.h"
 #include "OrientationConstraint.h"
 #include "PositionConstraint.h"
 #include "PhysicsObject.h"
@@ -16,8 +18,14 @@
 using namespace NCL;
 using namespace CSC8503;
 
-PlayerObject::PlayerObject(GameWorld& gameWorld, int id) : GameObject(gameWorld),
-id(id), behaviourRoot(std::string("Root-Player").append(std::to_string(id))), groundAirSelector(std::string("GroundAir-Player").append(std::to_string(id))) {
+PlayerObject::PlayerObject(GameWorld& gameWorld, int id, int& scoreCounter) : GameObject(gameWorld),
+id(id), scoreCounter(scoreCounter),
+behaviourRoot(std::string("Root-Player").append(std::to_string(id))),
+groundAirSelector(std::string("GroundAir-Player").append(std::to_string(id))) {
+	OnCollisionBeginCallback = [&](GameObject* other) {
+		CollisionWith(other);
+	};
+
 	groundTrigger = new GameObject(gameWorld, std::string("GroundTrigger-Player").append(std::to_string(id)));
 	groundTrigger->GetTransform().SetScale(Vector3(0.1f));
 	groundTrigger->SetBoundingVolume((CollisionVolume*)new AABBVolume(Vector3(0.1f), CollisionLayer::PlayerTrig));
@@ -100,9 +108,29 @@ PlayerObject::~PlayerObject() {
 void PlayerObject::Update(float dt) {
 	transform.SetPosition(Vector3(transform.GetPosition().x, std::max(1.0f, transform.GetPosition().y), transform.GetPosition().z));
 
+	lastGoosed += dt;
+
 	groundTrigger->GetTransform().SetPosition(transform.GetPosition() + Vector3(0, -1, 0));
 	behaviourRoot.Reset();
 	while (behaviourRoot.Execute(dt) == Ongoing) {}
+}
+
+void PlayerObject::AddPoints(int points) {
+	if (lastGoosed > gooseDelay) {
+		lastGoosed = 0.0f;
+		scoreCounter += points;
+	}
+}
+
+void PlayerObject::CollisionWith(GameObject* other) {
+	if (other->GetPhysicsObject() != nullptr && !collidedWith.contains(other->GetWorldID()) && !other->GetPhysicsObject()->IsStatic()) {
+		collidedWith.insert(other->GetWorldID());
+		if (dynamic_cast<NPCObject*>(other)) {
+			scoreCounter += 500;
+		} else {
+			scoreCounter += 100;
+		}
+	}
 }
 
 void PlayerObject::HandleGroundInput(float dt) {
@@ -165,6 +193,8 @@ void PlayerObject::HandleGoatActions(float dt) {
 				grappleConstraint = new PositionConstraint(this, grappledObject, 0, toungeMaxDistance, Vector3(0), toungeContactPoint);
 				gameWorld.AddConstraint(grappleConstraint);
 				tounge->SetActive(true);
+
+				CollisionWith(grappledObject);
 			}
 		}
 	}
@@ -176,10 +206,16 @@ void PlayerObject::FireLasers() {
 	laserA->GetTransform().SetPosition(transform.GetOrientation() * eyePosL + transform.GetPosition());
 	laserA->GetPhysicsObject()->AddForce(transform.GetOrientation() * laserForce);
 	gameWorld.AddGameObject(laserA);
+	laserA->OnCollisionBeginCallback = [&](GameObject* other) {
+		CollisionWith(other);
+	};
 
 	Bullet* laserB = new Bullet(gameWorld, *(Bullet*)AssetLibrary::GetPrefab("bullet"));
 	laserB->SetLifespan(laserLifespan);
 	laserB->GetTransform().SetPosition(transform.GetOrientation() * eyePosR + transform.GetPosition());
 	laserB->GetPhysicsObject()->AddForce(transform.GetOrientation() * laserForce);
 	gameWorld.AddGameObject(laserB);
+	laserB->OnCollisionBeginCallback = [&](GameObject* other) {
+		CollisionWith(other);
+	};
 }

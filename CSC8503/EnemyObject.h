@@ -20,6 +20,8 @@ namespace NCL {
 
 			virtual void Update(float dt) override;
 
+			void Daze();
+
 			bool CanSeePlayer();
 			bool IsDazed() {
 				return lastHitByBullet < dazeDuration;
@@ -60,6 +62,7 @@ namespace NCL {
 			}
 
 			void OnAwake() override {
+				enemy.Daze();
 				std::cout << "A goose is dazed!\n";
 			}
 		};
@@ -118,6 +121,8 @@ namespace NCL {
 			}
 
 			void OnAwake() override {
+				waypoints = enemy.GetRandomPatrolPoint();
+				nextPatrolPoint = waypoints.empty() ? Vector3() : waypoints[0];
 				std::cout << "A goose is patrolling!\n";
 			}
 		private:

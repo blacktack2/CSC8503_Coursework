@@ -5,6 +5,7 @@ set(PROJECT_NAME CSC8503)
 ################################################################################
 set(Header_Files
 	"Bullet.h"
+	"Bonus.h"
 	"EnemyObject.h"
     "GameTechRenderer.h"
 	"Maze.h"
@@ -19,6 +20,7 @@ source_group("Header Files" FILES ${Header_Files})
 
 set(Source_Files
 	"Bullet.cpp"
+	"Bonus.cpp"
 	"EnemyObject.cpp"
     "GameTechRenderer.cpp"
     "Main.cpp"
