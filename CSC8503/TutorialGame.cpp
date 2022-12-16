@@ -257,7 +257,7 @@ void TutorialGame::InitMazeWorld(int numRows, int numCols, float size) {
 	AddEnemyToWorld(position, nav);
 
 	for (int i = 0; i < 100; i++) {
-		while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 1.5f, (rand() % 400) - 200))) {}
+		while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 1.5f + rand() % 30, (rand() % 400) - 200))) {}
 		switch (rand() % 5) {
 			case 0: AddCubeToWorld(position, Vector3(2), 20.0f, true); break;
 			case 1: AddCubeToWorld(position, Vector3(1), 10.0f, false); break;
