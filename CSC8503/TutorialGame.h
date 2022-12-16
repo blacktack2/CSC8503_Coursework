@@ -33,6 +33,10 @@ namespace NCL {
 			void InitWorld(InitMode mode = InitMode::MAZE);
 
 			virtual void UpdateGame(float dt);
+
+			bool IsQuit() {
+				return quit;
+			}
 		protected:
 			void InitialiseAssets();
 			void InitialisePrefabs();
@@ -75,6 +79,8 @@ namespace NCL {
 			PhysicsSystem*		physics;
 			GameWorld*			world;
 
+			bool quit = false;
+			bool paused = false;
 			bool inSelectionMode;
 
 			float		forceMagnitude;

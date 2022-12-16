@@ -82,68 +82,70 @@ void TutorialGame::InitWorld(InitMode mode) {
 }
 
 void TutorialGame::UpdateGame(float dt) {
-	Vector2 screenSize = Window::GetWindow()->GetScreenSize();
-
-	Debug::Print(std::string("Score: ").append(std::to_string(score)), Vector2(5, 5), Vector4(1, 1, 0, 1));
-
-	if (!inSelectionMode) {
-		world->GetMainCamera()->UpdateCamera(dt);
-	}
-	Vector3 crossPos = CollisionDetection::Unproject(Vector3(screenSize * 0.5f, 0.99f), *world->GetMainCamera());
-	Debug::DrawAxisLines(Matrix4::Translation(crossPos), 1.0f);
-	if (lockedObject != nullptr) {
-		Vector3 objPos = lockedObject->GetTransform().GetPosition();
-		Vector3 camPos = objPos + lockedOffset;
-
-		Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos, Vector3(0,1,0));
-
-		Matrix4 modelMat = temp.Inverse();
-
-		Quaternion q(modelMat);
-		Vector3 angles = q.ToEuler(); //nearly there now!
-
-		world->GetMainCamera()->SetPosition(camPos);
-		world->GetMainCamera()->SetPitch(angles.x);
-		world->GetMainCamera()->SetYaw(angles.y);
-	}
-
 	UpdateKeys();
 
-	RayCollision closestCollision;
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
-		Vector3 rayPos;
-		Vector3 rayDir;
+	if (!paused) {
+		Vector2 screenSize = Window::GetWindow()->GetScreenSize();
 
-		rayDir = selectionObject->GetTransform().GetOrientation() * Vector3(0, 0, -1);
+		Debug::Print(std::string("Score: ").append(std::to_string(score)), Vector2(5, 5), Vector4(1, 1, 0, 1));
 
-		rayPos = selectionObject->GetTransform().GetPosition();
-
-		Ray r = Ray(rayPos, rayDir);
-
-		if (world->Raycast(r, closestCollision, true, selectionObject)) {
-			if (objClosest) {
-				objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
-			}
-			objClosest = (GameObject*)closestCollision.node;
-
-			objClosest->GetRenderObject()->SetColour(Vector4(1, 0, 1, 1));
+		if (!inSelectionMode) {
+			world->GetMainCamera()->UpdateCamera(dt);
 		}
+		Vector3 crossPos = CollisionDetection::Unproject(Vector3(screenSize * 0.5f, 0.99f), *world->GetMainCamera());
+		Debug::DrawAxisLines(Matrix4::Translation(crossPos), 1.0f);
+		if (lockedObject != nullptr) {
+			Vector3 objPos = lockedObject->GetTransform().GetPosition();
+			Vector3 camPos = objPos + lockedOffset;
+
+			Matrix4 temp = Matrix4::BuildViewMatrix(camPos, objPos, Vector3(0, 1, 0));
+
+			Matrix4 modelMat = temp.Inverse();
+
+			Quaternion q(modelMat);
+			Vector3 angles = q.ToEuler(); //nearly there now!
+
+			world->GetMainCamera()->SetPosition(camPos);
+			world->GetMainCamera()->SetPitch(angles.x);
+			world->GetMainCamera()->SetYaw(angles.y);
+		}
+
+		RayCollision closestCollision;
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::K) && selectionObject) {
+			Vector3 rayPos;
+			Vector3 rayDir;
+
+			rayDir = selectionObject->GetTransform().GetOrientation() * Vector3(0, 0, -1);
+
+			rayPos = selectionObject->GetTransform().GetPosition();
+
+			Ray r = Ray(rayPos, rayDir);
+
+			if (world->Raycast(r, closestCollision, true, selectionObject)) {
+				if (objClosest) {
+					objClosest->GetRenderObject()->SetColour(Vector4(1, 1, 1, 1));
+				}
+				objClosest = (GameObject*)closestCollision.node;
+
+				objClosest->GetRenderObject()->SetColour(Vector4(1, 0, 1, 1));
+			}
+		}
+
+		Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
+
+		if (player == nullptr) {
+			SelectObject();
+			MoveSelectedObject();
+		}
+
+		world->PreUpdateWorld();
+
+		world->UpdateWorld(dt);
+		renderer->Update(dt);
+		physics->Update(dt);
+
+		world->PostUpdateWorld();
 	}
-
-	Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
-
-	if (player == nullptr) {
-		SelectObject();
-		MoveSelectedObject();
-	}
-
-	world->PreUpdateWorld();
-
-	world->UpdateWorld(dt);
-	renderer->Update(dt);
-	physics->Update(dt);
-
-	world->PostUpdateWorld();
 
 	renderer->Render();
 	Debug::UpdateRenderables(dt);
@@ -203,55 +205,62 @@ void TutorialGame::InitCamera() {
 }
 
 void TutorialGame::UpdateKeys() {
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
-		InitWorld(InitMode::MAZE);
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2)) {
-		InitWorld(InitMode::MIXED_GRID);
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3)) {
-		InitWorld(InitMode::CUBE_GRID);
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F4)) {
-		InitWorld(InitMode::OBB_GRID);
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) {
-		InitWorld(InitMode::SPHERE_GRID);
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F6)) {
-		InitWorld(InitMode::BRIDGE_TEST);
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
-		InitWorld(InitMode::BRIDGE_TEST_ANG);
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
-		InitWorld(InitMode::PERFORMANCE_TEST);
-	}
+	if (paused) {
+		Debug::Print("Press [Escape] to resume", Vector2(5, 80), Vector4(1, 1, 1, 1));
+		Debug::Print("Press [q] to quit", Vector2(5, 90), Vector4(1, 1, 1, 1));
 
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::P)) {
-		InitCamera(); //F2 will reset the camera to a specific default place
-	}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::Q)) {
+			quit = true;
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::ESCAPE)) {
+			paused = false;
+		}
+	} else {
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::ESCAPE)) {
+			paused = true;
+		}
 
-	//Running certain physics updates in a consistent order might cause some
-	//bias in the calculations - the same objects might keep 'winning' the constraint
-	//allowing the other one to stretch too much etc. Shuffling the order so that it
-	//is random every frame can help reduce such bias.
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) {
-		world->ShuffleConstraints(false);
-	}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F1)) {
+			InitWorld(InitMode::MAZE);
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F2)) {
+			InitWorld(InitMode::MIXED_GRID);
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F3)) {
+			InitWorld(InitMode::CUBE_GRID);
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F4)) {
+			InitWorld(InitMode::OBB_GRID);
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F5)) {
+			InitWorld(InitMode::SPHERE_GRID);
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F6)) {
+			InitWorld(InitMode::BRIDGE_TEST);
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
+			InitWorld(InitMode::BRIDGE_TEST_ANG);
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
+			InitWorld(InitMode::PERFORMANCE_TEST);
+		}
 
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
-		world->ShuffleObjects(true);
-	}
-	if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
-		world->ShuffleObjects(false);
-	}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F10)) {
+			world->ShuffleConstraints(false);
+		}
 
-	if (lockedObject) {
-		LockedObjectMovement();
-	}
-	else {
-		DebugObjectMovement();
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
+			world->ShuffleObjects(true);
+		}
+		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
+			world->ShuffleObjects(false);
+		}
+
+		if (lockedObject) {
+			LockedObjectMovement();
+		} else {
+			DebugObjectMovement();
+		}
 	}
 }
 
