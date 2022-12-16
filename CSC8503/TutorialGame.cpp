@@ -246,13 +246,6 @@ void TutorialGame::UpdateKeys() {
 			world->ShuffleConstraints(false);
 		}
 
-		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F7)) {
-			world->ShuffleObjects(true);
-		}
-		if (Window::GetKeyboard()->KeyPressed(KeyboardKeys::F8)) {
-			world->ShuffleObjects(false);
-		}
-
 		if (lockedObject) {
 			LockedObjectMovement();
 		} else {
