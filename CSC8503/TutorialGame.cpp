@@ -127,8 +127,10 @@ void TutorialGame::UpdateGame(float dt) {
 
 	Debug::DrawLine(Vector3(), Vector3(0, 100, 0), Vector4(1, 0, 0, 1));
 
-	SelectObject();
-	MoveSelectedObject();
+	if (player == nullptr) {
+		SelectObject();
+		MoveSelectedObject();
+	}
 
 	world->PreUpdateWorld();
 
@@ -260,7 +262,10 @@ void TutorialGame::InitMazeWorld(int numRows, int numCols, float size) {
 	while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 5, (rand() % 400) - 200))) {}
 	AddEnemyToWorld(position, nav);
 
-	AddNPCToWorld(Vector3(10, 5, 0));
+	for (int i = 0; i < 50; i++) {
+		while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 5, (rand() % 400) - 200))) {}
+		AddNPCToWorld(position);
+	}
 
 	for (int i = 0; i < 100; i++) {
 		while (!mazes[0].ValidPoint(position = Vector3(((rand() % 400) - 200), 1.5f + rand() % 30, (rand() % 400) - 200))) {}
