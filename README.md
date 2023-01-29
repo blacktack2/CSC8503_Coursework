@@ -1,4 +1,4 @@
-# CSC8503 Coursework (WIP)
+# CSC8503 Coursework
 
 This is my coursework submission for the Newcastle University CSC8503 module.
 
